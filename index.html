@@ -3,95 +3,164 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title> GP Waiting Times </title>
+    <title>Doctor Waiting Times</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
     <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
         body {
-            font-family: Arial, sans-serif;
-            margin: 23px;
-            background-color: #FFFFFF;
+            font-family: 'Roboto', sans-serif;
+            background-color: #f5f7fa;
+            color: #333;
+            line-height: 1.6;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background-color: #fff;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+        }
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
         }
         h1 {
-            text-align: center;
-            color: #333;
+            font-size: 2.5rem;
+            color: #1a3c6d;
+        }
+        .logo {
+            max-width: 150px;
+            height: auto;
         }
         table {
-            width: 80%;
-            margin: 20px auto;
+            width: 100%;
             border-collapse: collapse;
-            background-color: #fff;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            margin-top: 20px;
         }
         th, td {
-            padding: 12px;
+            padding: 15px;
             text-align: left;
-            border: 1px solid #ddd;
+            border-bottom: 1px solid #e0e0e0;
         }
         th {
-            background-color: #4CAF50;
+            background-color: #1a3c6d;
             color: white;
+            font-weight: 700;
+            text-transform: uppercase;
+            font-size: 0.9rem;
         }
-        tr:nth-child(even) {
-            background-color: #f9f9f9;
+        tr {
+            transition: background-color 0.2s ease;
+        }
+        tr:hover {
+            background-color: #f8f9fa;
         }
         .status-red {
             background-color: #ff4d4d;
             color: white;
             text-align: center;
-            border-radius: 5px;
-            padding: 5px;
+            border-radius: 6px;
+            padding: 6px 12px;
             display: inline-block;
-            width: 80px;
+            width: 100px;
+            font-size: 0.9rem;
         }
         .status-green {
-            background-color: #4CAF50;
+            background-color: #28a745;
             color: white;
             text-align: center;
-            border-radius: 5px;
-            padding: 5px;
+            border-radius: 6px;
+            padding: 6px 12px;
             display: inline-block;
-            width: 80px;
+            width: 100px;
+            font-size: 0.9rem;
         }
         .status-yellow {
             background-color: #ffeb3b;
-            color: black;
+            color: #333;
             text-align: center;
-            border-radius: 5px;
-            padding: 5px;
+            border-radius: 6px;
+            padding: 6px 12px;
             display: inline-block;
-            width: 80px;
+            width: 100px;
+            font-size: 0.9rem;
         }
         #loading {
             text-align: center;
-            font-size: 18px;
+            font-size: 1.1rem;
             color: #555;
+            margin: 20px 0;
         }
         #error {
             text-align: center;
-            color: red;
-            font-weight: bold;
+            color: #ff4d4d;
+            font-weight: 500;
+            margin: 20px 0;
+        }
+        footer {
+            text-align: center;
+            margin-top: 30px;
+            color: #666;
+            font-size: 0.9rem;
+        }
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+            h1 {
+                font-size: 1.8rem;
+            }
+            .logo {
+                max-width: 100px;
+            }
+            th, td {
+                padding: 10px;
+                font-size: 0.85rem;
+            }
+            .status-red, .status-green, .status-yellow {
+                width: 80px;
+                padding: 4px 8px;
+            }
         }
     </style>
 </head>
 <body>
-    <h1>GP Waiting Times</h1>
-    <div id="loading">Loading data...</div>
-    <div id="error" style="display: none;"></div>
-    <table id="waiting-times-table">
-        <thead>
-            <tr>
-                <th>Doctor</th>
-                <th>Status</th>
-                <th>Wait (minutes)</th>
-            </tr>
-        </thead>
-        <tbody id="table-body"></tbody>
-    </table>
+    <div class="container">
+        <header>
+            <h1>Banbury Road MC Waiting Times</h1>
+            <img src="logo.png" alt="Clinic Logo" class="logo">
+        </header>
+        <div id="loading">Loading data...</div>
+        <div id="error" style="display: none;"></div>
+        <table id="waiting-times-table">
+            <thead>
+                <tr>
+                    <th>Doctor</th>
+                    <th>Status</th>
+                    <th>Wait (minutes)</th>
+                </tr>
+            </thead>
+            <tbody id="table-body"></tbody>
+        </table>
+        <footer>
+            <p>Updated in real-time from clinic data &copy; 2025</p>
+        </footer>
+    </div>
 
     <script>
-        // Your Google Sheet's published CSV URL
         const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vR6isKQeI8cgW7iaTV4KfnUugomy_4cHq-RcpqTDj1haz0uJFqIYi08khnhm5JuudGXxD4hh117g0GR/pub?output=csv';
 
         async function fetchData() {
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('error').style.display = 'none';
             try {
                 const response = await fetch(csvUrl);
                 if (!response.ok) throw new Error('Failed to fetch data from Google Sheet');
@@ -118,7 +187,7 @@
 
                 // Populate the table, skipping the header row
                 const tableBody = document.getElementById('table-body');
-                tableBody.innerHTML = ''; // Clear loading message
+                tableBody.innerHTML = ''; // Clear existing rows
 
                 for (let i = 1; i < rows.length; i++) {
                     const [doctor, status, wait] = rows[i];
