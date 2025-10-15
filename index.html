@@ -36,6 +36,11 @@
             font-size: 2.5rem;
             color: #1a3c6d;
         }
+        .datetime {
+            font-size: 1rem;
+            color: #666;
+            margin-top: 5px;
+        }
         .logo {
             max-width: 150px;
             height: auto;
@@ -118,6 +123,9 @@
             h1 {
                 font-size: 1.8rem;
             }
+            .datetime {
+                font-size: 0.85rem;
+            }
             .logo {
                 max-width: 100px;
             }
@@ -135,7 +143,10 @@
 <body>
     <div class="container">
         <header>
-            <h1>Banbury Road MC Waiting Times</h1>
+            <div>
+                <h1>Doctor Waiting Times</h1>
+                <p id="datetime" class="datetime"></p>
+            </div>
             <img src="logo.png" alt="Clinic Logo" class="logo">
         </header>
         <div id="loading">Loading data...</div>
@@ -157,6 +168,26 @@
 
     <script>
         const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vR6isKQeI8cgW7iaTV4KfnUugomy_4cHq-RcpqTDj1haz0uJFqIYi08khnhm5JuudGXxD4hh117g0GR/pub?output=csv';
+
+        // Function to update date and time
+        function updateDateTime() {
+            const now = new Date();
+            const options = {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                hour: 'numeric',
+                minute: 'numeric',
+                hour12: true
+            };
+            const formattedDateTime = now.toLocaleString('en-GB', options);
+            document.getElementById('datetime').textContent = formattedDateTime;
+        }
+
+        // Update date and time immediately and every second
+        updateDateTime();
+        setInterval(updateDateTime, 1000);
 
         async function fetchData() {
             document.getElementById('loading').style.display = 'block';
