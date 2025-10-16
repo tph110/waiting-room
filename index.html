@@ -102,6 +102,16 @@
             width: 100px;
             font-size: 0.9rem;
         }
+        .status-grey {
+            background-color: #6c757d;
+            color: white;
+            text-align: center;
+            border-radius: 6px;
+            padding: 6px 12px;
+            display: inline-block;
+            width: 100px;
+            font-size: 0.9rem;
+        }
         #loading {
             text-align: center;
             font-size: 1.1rem;
@@ -137,7 +147,7 @@
                 padding: 10px;
                 font-size: 0.85rem;
             }
-            .status-red, .status-green, .status-yellow {
+            .status-red, .status-green, .status-yellow, .status-grey {
                 width: 80px;
                 padding: 4px 8px;
             }
@@ -248,12 +258,13 @@
                 for (let i = 1; i < rows.length; i++) {
                     const [doctor, status, wait] = rows[i];
                     if (doctor && status && wait) { // Check non-empty doctor, status, and wait
-                        const normalizedStatus = status.toLowerCase();
-                        if (['red', 'green', 'yellow'].includes(normalizedStatus)) {
+                        const normalizedStatus = status.toLowerCase().replace('away', 'grey');
+                        if (['red', 'green', 'yellow', 'grey'].includes(normalizedStatus)) {
+                            const displayStatus = normalizedStatus === 'grey' ? 'Away' : status;
                             const row = document.createElement('tr');
                             row.innerHTML = `
                                 <td>${doctor}</td>
-                                <td><span class="status-${normalizedStatus}">${status}</span></td>
+                                <td><span class="status-${normalizedStatus}">${displayStatus}</span></td>
                                 <td>${wait}</td>
                             `;
                             tableBody.appendChild(row);
