@@ -133,11 +133,11 @@
         .ticker {
             display: inline-block;
             white-space: nowrap;
-            animation: ticker-scroll 30s linear infinite;
+            animation: ticker-scroll 20s linear infinite;
         }
         .ticker span {
             margin-right: 40px;
-            font-size: 1rem;
+            font-size: 1.1rem;
         }
         @keyframes ticker-scroll {
             0% { transform: translateX(100%); }
@@ -168,7 +168,7 @@
                 padding: 4px 8px;
             }
             .ticker span {
-                font-size: 0.85rem;
+                font-size: 0.9rem;
                 margin-right: 20px;
             }
         }
@@ -248,29 +248,38 @@
                     if (!response.ok) throw new Error('Failed to fetch data from Google Sheet');
                     const csvText = await response.text();
 
-                    // Parse CSV, handling quoted fields and commas
-                    rows = csvText.split('\n').map(row => {
-                        const cols = [];
-                        let current = '';
-                        let inQuotes = false;
-                        for (let i = 0; i < row.length; i++) {
-                            if (row[i] === '"') {
-                                inQuotes = !inQuotes;
-                            } else if (row[i] === ',' && !inQuotes) {
-                                cols.push(current.trim());
-                                current = '';
-                            } else {
-                                current += row[i];
+                    // Parse CSV with error handling
+                    rows = [];
+                    try {
+                        rows = csvText.split('\n').map(row => {
+                            const cols = [];
+                            let current = '';
+                            let inQuotes = false;
+                            for (let i = 0; i < row.length; i++) {
+                                if (row[i] === '"') {
+                                    inQuotes = !inQuotes;
+                                } else if (row[i] === ',' && !inQuotes) {
+                                    cols.push(current.trim());
+                                    current = '';
+                                } else {
+                                    current += row[i];
+                                }
                             }
-                        }
-                        cols.push(current.trim());
-                        return cols.filter(col => col !== ''); // Remove empty columns
-                    }).filter(row => row.length >= 3); // Ensure at least 3 columns
+                            cols.push(current.trim());
+                            return cols.filter(col => col !== ''); // Remove empty columns
+                        }).filter(row => row.length >= 3); // Ensure at least 3 columns
+                    } catch (parseError) {
+                        throw new Error('Failed to parse CSV: ' + parseError.message);
+                    }
 
                     // Cache the data
                     localStorage.setItem(cacheKey, JSON.stringify(rows));
                     localStorage.setItem(cacheTimeKey, Date.now());
                 }
+
+                // Debug row count and row 10
+                console.log('Total rows (including header):', rows.length);
+                console.log('Row 10 data:', rows.length > 9 ? rows[9] : 'Row 10 not available');
 
                 // Populate the table with all rows, skipping the header
                 const tableBody = document.getElementById('table-body');
@@ -291,18 +300,16 @@
                     }
                 }
 
-                // Populate ticker with text from A10, B10, C10 (row 10) if valid
+                // Populate ticker with text from A10 (Doctor column, row 10)
                 const tickerRowIndex = 9; // Row 10 (0-based, excluding header)
                 let tickerContent = '';
                 if (rows.length > tickerRowIndex && rows[tickerRowIndex][0]) {
-                    const [doctor, status, wait] = rows[tickerRowIndex];
-                    if (status && wait && ['red', 'green', 'yellow'].includes(status.toLowerCase())) {
-                        tickerContent = `<span>${doctor}: ${wait}, ${status}</span>`;
-                    } else {
-                        tickerContent = `<span>${doctor}</span>`;
-                    }
+                    tickerContent = `<span>${rows[tickerRowIndex][0]}</span>`;
+                } else if (rows.length > 1 && rows[1][0]) {
+                    // Fallback to row 2 (index 1) if row 10 is unavailable
+                    tickerContent = `<span>${rows[1][0]} (Row 10 unavailable)</span>`;
                 } else {
-                    tickerContent = '<span>No data in row 10, column A</span>';
+                    tickerContent = '<span>No valid data in row 10 or row 2, column A</span>';
                 }
 
                 // Update ticker
