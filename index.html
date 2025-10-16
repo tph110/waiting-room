@@ -189,7 +189,7 @@
                 <tr>
                     <th scope="col">Doctor</th>
                     <th scope="col">Status</th>
-                    <th scope="col">Wait (minutes)</th>
+                    <th scope="col">Wait</th>
                 </tr>
             </thead>
             <tbody id="table-body"></tbody>
@@ -256,7 +256,7 @@
                 tableBody.innerHTML = ''; // Clear existing rows
                 for (let i = 1; i < rows.length; i++) {
                     const [doctor, status, wait] = rows[i];
-                    if (doctor && status && !isNaN(parseInt(wait))) {
+                    if (doctor && status && wait) { // Check non-empty doctor, status, and wait
                         const normalizedStatus = status.toLowerCase();
                         if (['red', 'green', 'yellow'].includes(normalizedStatus)) {
                             const row = document.createElement('tr');
@@ -291,9 +291,9 @@
             }
         }
 
-        // Fetch data when the page loads and every 5 minutes
+        // Fetch data when the page loads and every 1 minutes
         window.onload = fetchData;
-        setInterval(fetchData, 5 * 60 * 1000); // Refresh every 5 minutes
+        setInterval(fetchData, 5 * 60 * 1000); // Refresh every 1 minutes
     </script>
 </body>
 </html>
