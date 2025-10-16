@@ -279,7 +279,7 @@
 
                 // Debug row count and row 10
                 console.log('Total rows (including header):', rows.length);
-                console.log('Row 10 data:', rows.length > 9 ? rows[9] : 'Row 10 not available');
+                console.log('Row 10 data:', rows.length > 10 ? rows[10] : 'Row 10 not available');
 
                 // Populate the table with all rows, skipping the header
                 const tableBody = document.getElementById('table-body');
@@ -300,8 +300,8 @@
                     }
                 }
 
-                // Populate ticker with text from A10 (Doctor column, row 10)
-                const tickerRowIndex = 9; // Row 10 (0-based, excluding header)
+                // Populate ticker with text from A10 (Doctor column, row 10, excluding header)
+                const tickerRowIndex = 10; // Row 10 (excluding header, rows[10] is the 10th data row)
                 let tickerContent = '';
                 if (rows.length > tickerRowIndex && rows[tickerRowIndex][0]) {
                     tickerContent = `<span>${rows[tickerRowIndex][0]}</span>`;
