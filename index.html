@@ -270,23 +270,13 @@
                     }
                 }
 
-                // Populate ticker with only row 10 (index 9)
+                // Populate ticker with text from A10 (Doctor column, row 10)
                 const tickerRowIndex = 9; // Row 10 (0-based, excluding header)
                 let tickerContent = '';
-                if (rows.length > tickerRowIndex) {
-                    const [doctor, status, wait] = rows[tickerRowIndex];
-                    if (doctor && status && !isNaN(parseInt(wait))) {
-                        const normalizedStatus = status.toLowerCase();
-                        if (['red', 'green', 'yellow'].includes(normalizedStatus)) {
-                            tickerContent = `<span>${doctor}: ${wait} min wait, ${status}</span>`;
-                        } else {
-                            tickerContent = '<span>Invalid status in row 10</span>';
-                        }
-                    } else {
-                        tickerContent = '<span>No valid data in row 10</span>';
-                    }
+                if (rows.length > tickerRowIndex && rows[tickerRowIndex][0]) {
+                    tickerContent = `<span>${rows[tickerRowIndex][0]}</span>`;
                 } else {
-                    tickerContent = '<span>Row 10 not found</span>';
+                    tickerContent = '<span>No data in row 10, column A</span>';
                 }
 
                 // Update ticker
