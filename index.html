@@ -120,32 +120,6 @@
             color: #666;
             font-size: 0.9rem;
         }
-        /* Ticker Styles */
-        .ticker-container {
-            width: 100%;
-            overflow: hidden;
-            background-color: #1a3c6d;
-            color: white;
-            padding: 10px 0;
-            margin: 20px 0;
-            border-radius: 6px;
-        }
-        .ticker {
-            display: inline-block;
-            white-space: nowrap;
-            animation: ticker-scroll 20s linear infinite;
-        }
-        .ticker span {
-            margin-right: 40px;
-            font-size: 1.1rem;
-        }
-        @keyframes ticker-scroll {
-            0% { transform: translateX(100%); }
-            100% { transform: translateX(-100%); }
-        }
-        .ticker:hover {
-            animation-play-state: paused;
-        }
         @media (max-width: 768px) {
             .container {
                 padding: 15px;
@@ -167,10 +141,6 @@
                 width: 80px;
                 padding: 4px 8px;
             }
-            .ticker span {
-                font-size: 0.9rem;
-                margin-right: 20px;
-            }
         }
     </style>
 </head>
@@ -191,14 +161,11 @@
                 <tr>
                     <th scope="col">Doctor</th>
                     <th scope="col">Status</th>
-                    <th scope="col">Wait</th>
+                    <th scope="col">Wait (minutes)</th>
                 </tr>
             </thead>
             <tbody id="table-body"></tbody>
         </table>
-        <div class="ticker-container" role="marquee">
-            <div id="ticker" class="ticker"></div>
-        </div>
         <footer>
             <p>Updated in real-time from clinic data &copy; 2025</p>
         </footer>
@@ -230,8 +197,6 @@
         async function fetchData() {
             document.getElementById('loading').style.display = 'block';
             document.getElementById('error').style.display = 'none';
-            const ticker = document.getElementById('ticker');
-            ticker.innerHTML = ''; // Clear ticker content
             try {
                 // Check cache
                 const cacheKey = 'waitingTimesData';
@@ -277,10 +242,6 @@
                     localStorage.setItem(cacheTimeKey, Date.now());
                 }
 
-                // Debug row count and row 10
-                console.log('Total rows (including header):', rows.length);
-                console.log('Row 10 data:', rows.length > 10 ? rows[10] : 'Row 10 not available');
-
                 // Populate the table with all rows, skipping the header
                 const tableBody = document.getElementById('table-body');
                 tableBody.innerHTML = ''; // Clear existing rows
@@ -300,27 +261,12 @@
                     }
                 }
 
-                // Populate ticker with text from A10 (Doctor column, row 10, excluding header)
-                const tickerRowIndex = 10; // Row 10 (excluding header, rows[10] is the 10th data row)
-                let tickerContent = '';
-                if (rows.length > tickerRowIndex && rows[tickerRowIndex][0]) {
-                    tickerContent = `<span>${rows[tickerRowIndex][0]}</span>`;
-                } else if (rows.length > 1 && rows[1][0]) {
-                    // Fallback to row 2 (index 1) if row 10 is unavailable
-                    tickerContent = `<span>${rows[1][0]} (Row 10 unavailable)</span>`;
-                } else {
-                    tickerContent = '<span>No valid data in row 10 or row 2, column A</span>';
-                }
-
-                // Update ticker
-                ticker.innerHTML = tickerContent;
                 document.getElementById('loading').style.display = 'none';
             } catch (error) {
                 document.getElementById('loading').style.display = 'none';
                 const errorDiv = document.getElementById('error');
                 errorDiv.textContent = 'Error loading data: ' + error.message;
                 errorDiv.style.display = 'block';
-                ticker.innerHTML = '<span>Error loading data</span>';
             }
         }
 
