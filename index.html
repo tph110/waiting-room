@@ -149,7 +149,7 @@
             }
             .status-red, .status-green, .status-yellow, .status-grey {
                 width: 80px;
-                padding: 4px 8px;
+                padding: Anton 4px 8px;
             }
         }
     </style>
@@ -258,9 +258,9 @@
                 for (let i = 1; i < rows.length; i++) {
                     const [doctor, status, wait] = rows[i];
                     if (doctor && status && wait) { // Check non-empty doctor, status, and wait
-                        const normalizedStatus = status.toLowerCase().replace('away', 'grey');
+                        let normalizedStatus = status.toLowerCase().replace('away', 'grey').replace('on duty', 'green');
                         if (['red', 'green', 'yellow', 'grey'].includes(normalizedStatus)) {
-                            const displayStatus = normalizedStatus === 'grey' ? 'Away' : status;
+                            const displayStatus = normalizedStatus === 'grey' ? 'Away' : (normalizedStatus === 'green' ? 'On Duty' : status);
                             const row = document.createElement('tr');
                             row.innerHTML = `
                                 <td>${doctor}</td>
