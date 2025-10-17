@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Appointment Waiting Times</title>
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet" />
-  <!-- PapaParse for robust CSV parsing -->
   <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -15,6 +14,7 @@
       color: #333;
       line-height: 1.6;
       padding: 20px;
+      padding-bottom: 60px; /* leave space for ticker */
     }
     .container {
       max-width: 1000px;
@@ -61,7 +61,6 @@
     .status-red { background-color:#ff4d4d; color:#fff; }
     .status-yellow { background-color:#ffeb3b; color:#333; }
     .status-grey { background-color:#6c757d; color:#fff; }
-    /* NEW: consulting blue */
     .status-blue { background-color:#007bff; color:#fff; }
 
     /* Wait-time badges */
@@ -82,11 +81,37 @@
     #error { text-align:center; color:#ff4d4d; font-weight:600; margin:18px 0; display:none; }
     footer { text-align:center; margin-top:26px; color:#666; font-size:0.9rem; }
 
+    /* Ticker at the bottom */
+    #ticker-container {
+      position: fixed;
+      bottom: 0;
+      width: 100%;
+      background-color: #1a3c6d;
+      color: white;
+      overflow: hidden;
+      white-space: nowrap;
+      box-shadow: 0 -2px 8px rgba(0,0,0,0.15);
+      font-weight: 600;
+      padding: 8px 0;
+      font-size: 1rem;
+    }
+    #ticker-text {
+      display: inline-block;
+      padding-left: 100%;
+      animation: ticker-scroll 20s linear infinite;
+    }
+    @keyframes ticker-scroll {
+      0% { transform: translateX(0%); }
+      100% { transform: translateX(-100%); }
+    }
+
     @media (max-width:768px) {
       .container { padding:16px; }
       h1 { font-size:1.6rem; }
       th, td { padding:10px; font-size:0.88rem; }
       .status-badge, .wait-badge { width:auto; padding:4px 8px; font-size:0.85rem; }
+      /* slower ticker scroll on mobile */
+      #ticker-text { animation: ticker-scroll 40s linear infinite; }
     }
   </style>
 </head>
@@ -123,184 +148,108 @@
     </footer>
   </div>
 
+  <!-- Ticker -->
+  <div id="ticker-container" aria-live="polite">
+    <div id="ticker-text">Loading ticker...</div>
+  </div>
+
   <script>
-    // === Configuration ===
     const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vR6isKQeI8cgW7iaTV4KfnUugomy_4cHq-RcpqTDj1haz0uJFqIYi08khnhm5JuudGXxD4hh117g0GR/pub?output=csv';
+    const sheet3CsvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vR6isKQeI8cgW7iaTV4KfnUugomy_4cHq-RcpqTDj1haz0uJFqIYi08khnhm5JuudGXxD4hh117g0GR/pub?output=csv';
     const cacheKey = 'waitingTimesData';
     const cacheTimeKey = 'waitingTimesCacheTime';
-    const cacheDuration = 5 * 60 * 1000; // 5 minutes
+    const cacheDuration = 5 * 60 * 1000; 
 
-    // === Clock (updates every minute) ===
     function updateDateTime() {
       const now = new Date();
-      const options = {
-        weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
-        hour: 'numeric', minute: 'numeric', hour12: true
-      };
+      const options = { weekday:'long', year:'numeric', month:'long', day:'numeric', hour:'numeric', minute:'numeric', hour12:true };
       document.getElementById('datetime').textContent = now.toLocaleString('en-GB', options);
     }
     updateDateTime();
-    setInterval(updateDateTime, 60000);
+    setInterval(updateDateTime,60000);
 
-    // === CSV cache helpers ===
-    function saveToCache(rows) {
-      try {
-        localStorage.setItem(cacheKey, JSON.stringify(rows));
-        localStorage.setItem(cacheTimeKey, Date.now());
-      } catch (e) { /* ignore storage errors */ }
-    }
-    function loadFromCache() {
-      try {
-        const c = localStorage.getItem(cacheKey);
-        const t = localStorage.getItem(cacheTimeKey);
-        if (c && t && (Date.now() - Number(t)) < cacheDuration) {
-          return JSON.parse(c);
-        }
-      } catch (e) { /* ignore parse errors */ }
-      return null;
+    function saveToCache(rows){try{localStorage.setItem(cacheKey,JSON.stringify(rows)); localStorage.setItem(cacheTimeKey,Date.now());}catch(e){}}
+    function loadFromCache(){try{const c=localStorage.getItem(cacheKey); const t=localStorage.getItem(cacheTimeKey); if(c&&t&&(Date.now()-Number(t))<cacheDuration) return JSON.parse(c);}catch(e){} return null;}
+
+    function normalizeStatus(statusRaw){
+      if(!statusRaw) return { className:'status-grey', label:'Unknown'};
+      const s=String(statusRaw).trim().toLowerCase();
+      if(/unavail|not available|closed|off sick/.test(s)) return {className:'status-red', label:'Unavailable'};
+      if(/on.?duty|available|consulting|in clinic|onsite/.test(s)) return {className:'status-blue', label:'Consulting'};
+      if(/busy|delayed|running late|wait|waiting/.test(s)) return {className:'status-yellow', label:'Busy'};
+      if(/away|off|break|off duty/.test(s)) return {className:'status-grey', label:'Away'};
+      return {className:'status-grey', label:statusRaw};
     }
 
-    // === Robust status normalisation ===
-    // On Duty / Available -> blue / "Consulting"
-    // Unavailable -> red / "Unavailable"
-    // Busy/delayed -> yellow / "Busy"
-    // Away/off -> grey / "Away"
-    // If unknown, show original text with neutral grey badge
-    function normalizeStatus(statusRaw) {
-      if (statusRaw === undefined || statusRaw === null) return { className: 'status-grey', label: 'Unknown' };
-      const original = String(statusRaw).trim();
-      const s = original.toLowerCase();
-
-      // canonical checks that map to red
-      if (s === 'red' || /unavail|unavailable|not available|closed|off sick/.test(s)) {
-        return { className: 'status-red', label: 'Unavailable' };
-      }
-
-      // map to consulting blue
-      if (s === 'green' || /on.?duty|available|consulting|in clinic|onsite|in clinic/.test(s)) {
-        return { className: 'status-blue', label: 'Consulting' };
-      }
-
-      // busy / delayed -> yellow
-      if (s === 'yellow' || /busy|delayed|running late|wait|waiting/.test(s)) {
-        return { className: 'status-yellow', label: 'Busy' };
-      }
-
-      // away / off -> grey
-      if (s === 'grey' || /away|off|break|off duty/.test(s)) {
-        return { className: 'status-grey', label: 'Away' };
-      }
-
-      // if the sheet contains extra context, try to map by keywords
-      if (/on.?duty|available|consulting|in clinic|onsite/.test(s)) {
-        return { className: 'status-blue', label: 'Consulting' };
-      }
-      if (/unavail|unavailable|closed|off sick/.test(s)) {
-        return { className: 'status-red', label: 'Unavailable' };
-      }
-      if (/busy|delayed|running late|wait|waiting/.test(s)) {
-        return { className: 'status-yellow', label: 'Busy' };
-      }
-      if (/away|off|break|off duty/.test(s)) {
-        return { className: 'status-grey', label: 'Away' };
-      }
-
-      // fallback: show the original text with neutral styling
-      return { className: 'status-grey', label: original || 'Unknown' };
+    function getWaitClassAndLabel(waitRaw){
+      if(!waitRaw) return {cls:'wait-grey', label:''};
+      const s=String(waitRaw).trim().toLowerCase();
+      if(s==='on time'||s==='ontime'||s==='on-time') return {cls:'wait-green', label:waitRaw};
+      if(s==='15 minute delay'||s==='15 min delay'||s==='15 min'||s==='15') return {cls:'wait-lightgreen', label:waitRaw};
+      if(s==='30 minute delay'||s==='30 min delay'||s==='30 min'||s==='30') return {cls:'wait-yellow', label:waitRaw};
+      if(s==='severely delayed'||/severe/.test(s)) return {cls:'wait-red', label:waitRaw};
+      return {cls:'wait-grey', label:waitRaw};
     }
 
-    // === Wait column colour logic ===
-    // Matches the exact outcomes you specified, but is forgiving for small variants.
-    function getWaitClassAndLabel(waitRaw) {
-      if (waitRaw === undefined || waitRaw === null) return { cls: 'wait-grey', label: '' };
-      const raw = String(waitRaw).trim();
-      const s = raw.toLowerCase();
+    function escapeHtml(str){if(!str&&str!==0) return ''; return String(str).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'","&#39;");}
 
-      if (s === 'on time' || s === 'ontime' || s === 'on-time') return { cls: 'wait-green', label: raw || 'On time' };
-      if (s === '15 minute delay' || s === '15 min delay' || s === '15 min' || s === '15') return { cls: 'wait-lightgreen', label: raw || '15 minute delay' };
-      if (s === '30 minute delay' || s === '30 min delay' || s === '30 min' || s === '30') return { cls: 'wait-yellow', label: raw || '30 minute delay' };
-      if (s === 'severely delayed' || /severe|severely/.test(s)) return { cls: 'wait-red', label: raw || 'Severely delayed' };
-
-      // not matched -> neutral grey, display original text
-      return { cls: 'wait-grey', label: raw };
+    async function fetchCsvRaw(url){
+      const r=await fetch(url,{cache:'no-store'}); if(!r.ok) throw new Error('Failed to fetch CSV');
+      const text=await r.text();
+      return Papa.parse(text.trim(),{skipEmptyLines:true}).data||[];
     }
 
-    // === CSV fetching/parsing ===
-    async function fetchCsvRaw() {
-      const resp = await fetch(csvUrl, { cache: 'no-store' });
-      if (!resp.ok) throw new Error('Failed to fetch CSV (HTTP ' + resp.status + ')');
-      const text = await resp.text();
-      // Use PapaParse to handle quoted commas etc.
-      const parsed = Papa.parse(text.trim(), { skipEmptyLines: true });
-      return parsed.data || [];
-    }
+    async function fetchData(){
+      const loading=document.getElementById('loading');
+      const errorDiv=document.getElementById('error');
+      const tbody=document.getElementById('table-body');
+      loading.style.display='block'; errorDiv.style.display='none'; tbody.innerHTML='';
 
-    // === Main data flow ===
-    async function fetchData() {
-      const loading = document.getElementById('loading');
-      const errorDiv = document.getElementById('error');
-      const tbody = document.getElementById('table-body');
-      loading.style.display = 'block';
-      errorDiv.style.display = 'none';
-      tbody.innerHTML = '';
-
-      try {
-        let rows = loadFromCache();
-        if (!rows) {
-          rows = await fetchCsvRaw();
-          saveToCache(rows);
-        }
-
-        // Basic CSV structure validation
-        if (!Array.isArray(rows) || rows.length < 2) {
-          throw new Error('CSV appears empty or has unexpected format.');
-        }
-
-        // Render: skip header (row 0)
-        for (let i = 1; i < rows.length; i++) {
-          const row = rows[i] || [];
-          const doctor = (row[0] || '').trim();
-          const statusRaw = (row[1] !== undefined ? String(row[1]).trim() : '');
-          const waitRaw = (row[2] !== undefined ? String(row[2]).trim() : '');
-
-          // Skip completely empty rows
-          if (!doctor && !statusRaw && !waitRaw) continue;
-
-          const status = normalizeStatus(statusRaw);
-          const wait = getWaitClassAndLabel(waitRaw);
-
-          const tr = document.createElement('tr');
-          tr.innerHTML = `
-            <td>${escapeHtml(doctor)}</td>
-            <td><span class="status-badge ${status.className}">${escapeHtml(status.label)}</span></td>
-            <td><span class="wait-badge ${wait.cls}">${escapeHtml(wait.label)}</span></td>
-          `;
+      try{
+        let rows=loadFromCache();
+        if(!rows){rows=await fetchCsvRaw(csvUrl); saveToCache(rows);}
+        for(let i=1;i<rows.length;i++){
+          const row=rows[i]||[];
+          const doctor=(row[0]||'').trim();
+          const statusRaw=(row[1]||'').trim();
+          const waitRaw=(row[2]||'').trim();
+          if(!doctor&&!statusRaw&&!waitRaw) continue;
+          const status=normalizeStatus(statusRaw);
+          const wait=getWaitClassAndLabel(waitRaw);
+          const tr=document.createElement('tr');
+          tr.innerHTML=`<td>${escapeHtml(doctor)}</td>
+                        <td><span class="status-badge ${status.className}">${escapeHtml(status.label)}</span></td>
+                        <td><span class="wait-badge ${wait.cls}">${escapeHtml(wait.label)}</span></td>`;
           tbody.appendChild(tr);
         }
-
-        loading.style.display = 'none';
-      } catch (err) {
-        loading.style.display = 'none';
-        errorDiv.textContent = 'Error loading data: ' + err.message;
-        errorDiv.style.display = 'block';
+        loading.style.display='none';
+      }catch(err){
+        loading.style.display='none';
+        errorDiv.textContent='Error loading data: '+err.message;
+        errorDiv.style.display='block';
         console.error(err);
       }
     }
 
-    // small helper to avoid HTML injection (good practice for any user-supplied CSV)
-    function escapeHtml(str) {
-      if (!str && str !== 0) return '';
-      return String(str)
-        .replaceAll('&', '&amp;')
-        .replaceAll('<', '&lt;')
-        .replaceAll('>', '&gt;')
-        .replaceAll('"', '&quot;')
-        .replaceAll("'", '&#39;');
+    async function fetchTickerText(){
+      try{
+        const data=await fetchCsvRaw(sheet3CsvUrl);
+        let tickerText='No ticker message';
+        if(Array.isArray(data)&&data.length>0&&data[0].length>0) tickerText=data[0][0].trim();
+        document.getElementById('ticker-text').textContent=tickerText||'No ticker message';
+      }catch(err){
+        console.error('Ticker error:',err);
+        document.getElementById('ticker-text').textContent='Error loading ticker';
+      }
     }
 
-    // Initialize and schedule refresh
-    window.addEventListener('load', fetchData);
-    setInterval(fetchData, 5 * 60 * 1000); // refresh every 5 minutes
+    window.addEventListener('load',()=>{
+      fetchData();
+      fetchTickerText();
+    });
+
+    setInterval(fetchData,5*60*1000);
+    setInterval(fetchTickerText,5*60*1000);
   </script>
 </body>
 </html>
