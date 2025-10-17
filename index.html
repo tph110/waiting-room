@@ -133,13 +133,25 @@
     setInterval(updateDateTime, 60000);
 
     function normalizeStatus(statusRaw) {
-      if (!statusRaw) return { className: 'grey', label: 'Unknown' };
-      const s = statusRaw.toLowerCase();
-      if (/unavail|not available/.test(s)) return { className: 'red', label: 'Unavailable' };
-      if (/on.?duty|available|consulting|in clinic|onsite/.test(s)) return { className: 'green', label: 'On Duty' };
-      if (/busy|delayed|running late|wait/.test(s)) return { className: 'yellow', label: 'Busy' };
-      if (/away|off|break/.test(s)) return { className: 'grey', label: 'Away' };
-      return { className: 'grey', label: statusRaw };
+  if (!statusRaw) return { className: 'grey', label: 'Unknown' };
+  const s = statusRaw.toLowerCase();
+
+  if (/unavail|not available/.test(s))
+    return { className: 'red', label: 'Unavailable' };
+
+  // 🟦 Changed: “On Duty” / “Available” now maps to blue and says “Consulting”
+  if (/on.?duty|available|consulting|in clinic|onsite/.test(s))
+    return { className: 'blue', label: 'Consulting' };
+
+  if (/busy|delayed|running late|wait/.test(s))
+    return { className: 'yellow', label: 'Busy' };
+
+  if (/away|off|break/.test(s))
+    return { className: 'grey', label: 'Away' };
+
+  return { className: 'grey', label: statusRaw };
+}
+
     }
 
     // NEW: Determine wait cell color class
