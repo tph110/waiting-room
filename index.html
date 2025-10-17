@@ -1,226 +1,235 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Appointment Waiting Times</title>
-  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet" />
-  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
-  <style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Appointment Waiting Times</title>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+<style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
-      font-family: 'Roboto', sans-serif;
-      background-color: #f5f7fa;
-      color: #333;
-      line-height: 1.6;
-      padding: 20px;
-      padding-bottom: 60px; /* leave space for ticker */
+        font-family: 'Roboto', sans-serif;
+        background-color: #f5f7fa;
+        color: #333;
+        line-height: 1.6;
+        padding: 20px;
     }
     .container {
-      max-width: 1000px;
-      margin: 0 auto;
-      background-color: #fff;
-      border-radius: 12px;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-      padding: 30px;
+        max-width: 1000px;
+        margin: 0 auto 60px auto;
+        background-color: #fff;
+        border-radius: 12px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        padding: 30px;
     }
     header {
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      margin-bottom:20px;
-      flex-wrap:wrap;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
     }
-    h1 { font-size:2.2rem; color:#1a3c6d; }
-    .datetime { font-size:1rem; color:#666; margin-top:6px; }
-    .logo { max-width:150px; height:auto; }
-    .logo-fallback { font-size:1rem; color:#666; display:none; }
-
-    table { width:100%; border-collapse:collapse; margin-top:20px; }
-    th, td { padding:15px; text-align:left; border-bottom:1px solid #e9ecef; vertical-align:middle; }
+    h1 {
+        font-size: 2.5rem;
+        color: #1a3c6d;
+    }
+    .datetime {
+        font-size: 1rem;
+        color: #666;
+        margin-top: 5px;
+    }
+    .logo {
+        max-width: 150px;
+        height: auto;
+    }
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+    }
+    th, td {
+        padding: 15px;
+        text-align: left;
+        border-bottom: 1px solid #e0e0e0;
+        font-size: 1rem;
+    }
     th {
-      background-color: #1a3c6d;
-      color: #fff;
-      font-weight:700;
-      text-transform:uppercase;
-      font-size:0.85rem;
+        background-color: #1a3c6d;
+        color: white;
+        font-weight: 700;
+        text-transform: uppercase;
+        font-size: 0.9rem;
     }
-    tr { transition: background-color 0.18s ease; }
-    tr:hover { background-color: #fbfcfe; }
+    tr { transition: background-color 0.2s ease; }
+    tr:hover { background-color: #f8f9fa; }
 
-    /* Wait-time badges */
-    .wait-badge {
-      display:inline-block;
-      border-radius:6px;
-      padding:6px 12px;
-      font-weight:600;
-      font-size:0.9rem;
+    /* Wait-time color styling for full-cell shading */
+    .wait-cell {
+        color: #fff;
+        font-weight: 600;
+        text-align: center;
+        border-radius: 6px;
+        padding: 8px;
+        min-width: 120px;
     }
-    .wait-green { background-color:#28a745; color:#fff; }
-    .wait-lightgreen { background-color:#8bc34a; color:#fff; }
-    .wait-yellow { background-color:#ffeb3b; color:#333; }
-    .wait-red { background-color:#ff4d4d; color:#fff; }
-    .wait-grey { background-color:#e9ecef; color:#333; }
+    .wait-green { background-color: #28a745; }
+    .wait-lightgreen { background-color: #8bc34a; }
+    .wait-yellow { background-color: #ffeb3b; color: #333; }
+    .wait-red { background-color: #ff4d4d; }
+    .wait-grey { background-color: #e9ecef; color: #333; }
 
-    #loading { text-align:center; font-size:1.05rem; color:#555; margin:18px 0; }
-    #error { text-align:center; color:#ff4d4d; font-weight:600; margin:18px 0; display:none; }
-    footer { text-align:center; margin-top:26px; color:#666; font-size:0.9rem; }
+    #loading, #error {
+        text-align: center;
+        margin: 20px 0;
+    }
+    #loading { font-size: 1.1rem; color: #555; }
+    #error { color: #ff4d4d; font-weight: 500; }
 
-    /* Ticker at the bottom */
+    footer {
+        text-align: center;
+        margin-top: 30px;
+        color: #666;
+        font-size: 0.9rem;
+    }
+
+    /* Ticker styling */
     #ticker-container {
-      position: fixed;
-      bottom: 0;
-      width: 100%;
-      background-color: #1a3c6d;
-      color: white;
-      overflow: hidden;
-      white-space: nowrap;
-      box-shadow: 0 -2px 8px rgba(0,0,0,0.15);
-      font-weight: 600;
-      padding: 8px 0;
-      font-size: 1rem;
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        background-color: #1a3c6d;
+        color: white;
+        overflow: hidden;
+        white-space: nowrap;
+        box-shadow: 0 -2px 8px rgba(0,0,0,0.15);
+        font-weight: 600;
+        padding: 8px 0;
+        font-size: 1rem;
+        z-index: 999;
     }
     #ticker-text {
-      display: inline-block;
-      padding-left: 100%;
-      animation: ticker-scroll 20s linear infinite;
+        display: inline-block;
+        padding-left: 100%;
+        animation: ticker-scroll 25s linear infinite;
     }
     @keyframes ticker-scroll {
-      0% { transform: translateX(0%); }
-      100% { transform: translateX(-100%); }
+        0% { transform: translateX(0%); }
+        100% { transform: translateX(-100%); }
     }
-
-    @media (max-width:768px) {
-      .container { padding:16px; }
-      h1 { font-size:1.6rem; }
-      th, td { padding:10px; font-size:0.88rem; }
-      .wait-badge { width:auto; padding:4px 8px; font-size:0.85rem; }
-      /* slower ticker scroll on mobile */
-      #ticker-text { animation: ticker-scroll 40s linear infinite; }
+    /* Slower ticker on mobile */
+    @media (max-width: 768px) {
+        #ticker-text {
+            animation-duration: 40s;
+        }
     }
-  </style>
+</style>
 </head>
+
 <body>
-  <div class="container">
+<div class="container">
     <header>
-      <div>
-        <h1>Appointment Waiting Times</h1>
-        <p id="datetime" class="datetime" aria-hidden="true"></p>
-      </div>
-      <div>
-        <img src="logo.png" alt="Clinic Logo" class="logo"
-             onerror="this.style.display='none'; this.nextElementSibling.style.display='inline-block';" />
-        <span class="logo-fallback">Clinic Logo</span>
-      </div>
+        <div>
+            <h1>Appointment Waiting Times</h1>
+        </div>
+        <img src="logo.png" alt="Clinic Logo" class="logo" onerror="this.style.display='none'">
     </header>
 
     <div id="loading">Loading data...</div>
-    <div id="error" role="alert"></div>
+    <div id="error" style="display: none;"></div>
 
-    <table id="waiting-times-table" aria-label="Appointment Waiting Times" aria-live="polite">
-      <thead>
-        <tr>
-          <th scope="col">Doctor</th>
-          <th scope="col">Wait (minutes)</th>
-        </tr>
-      </thead>
-      <tbody id="table-body"></tbody>
+    <table id="waiting-times-table" aria-label="Appointment Waiting Times">
+        <thead>
+            <tr>
+                <th scope="col">Doctor</th>
+                <th scope="col">Wait (minutes)</th>
+            </tr>
+        </thead>
+        <tbody id="table-body"></tbody>
     </table>
 
     <footer>
-      <p>Updated automatically from clinic data &copy; 2025</p>
+        <p>Updated in real-time from clinic data &copy; 2025</p>
     </footer>
-  </div>
+</div>
 
-  <!-- Ticker -->
-  <div id="ticker-container" aria-live="polite">
-    <div id="ticker-text">Loading ticker...</div>
-  </div>
+<!-- Ticker at bottom -->
+<div id="ticker-container" aria-live="polite">
+  <div id="ticker-text">Loading ticker...</div>
+</div>
 
-  <script>
-    const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vR6isKQeI8cgW7iaTV4KfnUugomy_4cHq-RcpqTDj1haz0uJFqIYi08khnhm5JuudGXxD4hh117g0GR/pub?output=csv';
-    const sheet3CsvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vR6isKQeI8cgW7iaTV4KfnUugomy_4cHq-RcpqTDj1haz0uJFqIYi08khnhm5JuudGXxD4hh117g0GR/pub?gid=901601788&single=true&output=csv';
-    const cacheKey = 'waitingTimesData';
-    const cacheTimeKey = 'waitingTimesCacheTime';
-    const cacheDuration = 5 * 60 * 1000; 
+<script>
+const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vR6isKQeI8cgW7iaTV4KfnUugomy_4cHq-RcpqTDj1haz0uJFqIYi08khnhm5JuudGXxD4hh117g0GR/pub?output=csv';
+const sheet3CsvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vR6isKQeI8cgW7iaTV4KfnUugomy_4cHq-RcpqTDj1haz0uJFqIYi08khnhm5JuudGXxD4hh117g0GR/pub?gid=901601788&single=true&output=csv';
 
-    function updateDateTime() {
-      const now = new Date();
-      const options = { weekday:'long', year:'numeric', month:'long', day:'numeric', hour:'numeric', minute:'numeric', hour12:true };
-      document.getElementById('datetime').textContent = now.toLocaleString('en-GB', options);
-    }
-    updateDateTime();
-    setInterval(updateDateTime,60000);
+// Escape HTML
+function escapeHtml(text) {
+    const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
+    return text.replace(/[&<>"']/g, m => map[m]);
+}
 
-    function saveToCache(rows){try{localStorage.setItem(cacheKey,JSON.stringify(rows)); localStorage.setItem(cacheTimeKey,Date.now());}catch(e){}}
-    function loadFromCache(){try{const c=localStorage.getItem(cacheKey); const t=localStorage.getItem(cacheTimeKey); if(c&&t&&(Date.now()-Number(t))<cacheDuration) return JSON.parse(c);}catch(e){} return null;}
+// Fetch data for the main table
+async function fetchData() {
+    document.getElementById('loading').style.display = 'block';
+    document.getElementById('error').style.display = 'none';
+    try {
+        const response = await fetch(csvUrl, { cache: 'no-store' });
+        if (!response.ok) throw new Error('Failed to fetch data');
+        const csvText = await response.text();
+        const rows = csvText.trim().split('\n').map(r => r.split(',')).filter(r => r.length >= 2);
+        const tableBody = document.getElementById('table-body');
+        tableBody.innerHTML = '';
 
-    function getWaitClassAndLabel(waitRaw){
-      if(!waitRaw) return {cls:'wait-grey', label:''};
-      const s=String(waitRaw).trim().toLowerCase();
-      if(s==='on time'||s==='ontime'||s==='on-time') return {cls:'wait-green', label:waitRaw};
-      if(s==='15 minute delay'||s==='15 min delay'||s==='15 min'||s==='15') return {cls:'wait-lightgreen', label:waitRaw};
-      if(s==='30 minute delay'||s==='30 min delay'||s==='30 min'||s==='30') return {cls:'wait-yellow', label:waitRaw};
-      if(s==='severely delayed'||/severe/.test(s)) return {cls:'wait-red', label:waitRaw};
-      return {cls:'wait-grey', label:waitRaw};
-    }
+        for (let i = 1; i < rows.length; i++) {
+            const [doctor, wait] = rows[i].map(c => c.trim());
+            if (!doctor || !wait) continue;
 
-    function escapeHtml(str){if(!str&&str!==0) return ''; return String(str).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'","&#39;");}
+            let waitClass = 'wait-grey';
+            let waitLabel = wait;
+            const lower = wait.toLowerCase();
+            if (lower.includes('on time')) waitClass = 'wait-green';
+            else if (lower.includes('15')) waitClass = 'wait-lightgreen';
+            else if (lower.includes('30')) waitClass = 'wait-yellow';
+            else if (lower.includes('severe')) waitClass = 'wait-red';
 
-    async function fetchCsvRaw(url){
-      const r=await fetch(url,{cache:'no-store'}); if(!r.ok) throw new Error('Failed to fetch CSV');
-      const text=await r.text();
-      return Papa.parse(text.trim(),{skipEmptyLines:true}).data||[];
-    }
-
-    async function fetchData(){
-      const loading=document.getElementById('loading');
-      const errorDiv=document.getElementById('error');
-      const tbody=document.getElementById('table-body');
-      loading.style.display='block'; errorDiv.style.display='none'; tbody.innerHTML='';
-
-      try{
-        let rows=loadFromCache();
-        if(!rows){rows=await fetchCsvRaw(csvUrl); saveToCache(rows);}
-        for(let i=1;i<rows.length;i++){
-          const row=rows[i]||[];
-          const doctor=(row[0]||'').trim();
-          const waitRaw=(row[2]||'').trim(); // Status column skipped
-          if(!doctor&&!waitRaw) continue;
-          const wait=getWaitClassAndLabel(waitRaw);
-          const tr=document.createElement('tr');
-          tr.innerHTML=`<td>${escapeHtml(doctor)}</td>
-                        <td><span class="wait-badge ${wait.cls}">${escapeHtml(wait.label)}</span></td>`;
-          tbody.appendChild(tr);
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${escapeHtml(doctor)}</td>
+                <td class="wait-cell ${waitClass}">${escapeHtml(waitLabel)}</td>
+            `;
+            tableBody.appendChild(tr);
         }
-        loading.style.display='none';
-      }catch(err){
-        loading.style.display='none';
-        errorDiv.textContent='Error loading data: '+err.message;
-        errorDiv.style.display='block';
-        console.error(err);
-      }
+
+        document.getElementById('loading').style.display = 'none';
+    } catch (err) {
+        document.getElementById('loading').style.display = 'none';
+        const errorDiv = document.getElementById('error');
+        errorDiv.textContent = 'Error loading data: ' + err.message;
+        errorDiv.style.display = 'block';
     }
+}
 
-    async function fetchTickerText(){
-      try{
-        const data=await fetchCsvRaw(sheet3CsvUrl);
-        let tickerText='No ticker message';
-        if(Array.isArray(data)&&data.length>0&&data[0].length>0) tickerText=data[0][0].trim();
-        document.getElementById('ticker-text').textContent=tickerText||'No ticker message';
-      }catch(err){
-        console.error('Ticker error:',err);
-        document.getElementById('ticker-text').textContent='Error loading ticker';
-      }
+// Fetch ticker text (Sheet 3, Cell A1)
+async function fetchTickerText() {
+    try {
+        const response = await fetch(sheet3CsvUrl, { cache: 'no-store' });
+        if (!response.ok) throw new Error('Failed to fetch ticker');
+        const text = await response.text();
+        const firstLine = text.trim().split('\n')[0];
+        const firstCell = firstLine.split(',')[0].trim();
+        document.getElementById('ticker-text').textContent = firstCell || 'No ticker message available';
+    } catch (err) {
+        console.error('Ticker error:', err);
+        document.getElementById('ticker-text').textContent = 'Error loading ticker';
     }
+}
 
-    window.addEventListener('load',()=>{
-      fetchData();
-      fetchTickerText();
-    });
-
-    setInterval(fetchData,5*60*1000);
-    setInterval(fetchTickerText,5*60*1000);
-  </script>
+// Load data and ticker periodically
+window.addEventListener('load', () => {
+    fetchData();
+    fetchTickerText();
+    setInterval(fetchData, 5 * 60 * 1000);
+    setInterval(fetchTickerText, 5 * 60 * 1000);
+});
+</script>
 </body>
 </html>
