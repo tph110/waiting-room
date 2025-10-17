@@ -1,289 +1,323 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Appointment Waiting Times</title>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
-    <style>
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-        body {
-            font-family: 'Roboto', sans-serif;
-            background-color: #f5f7fa;
-            color: #333;
-            line-height: 1.6;
-            padding: 20px;
-        }
-        .container {
-            max-width: 1000px;
-            margin: 0 auto;
-            background-color: #fff;
-            border-radius: 12px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-            padding: 30px;
-        }
-        header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-        }
-        h1 {
-            font-size: 2.5rem;
-            color: #1a3c6d;
-        }
-        .datetime {
-            font-size: 1rem;
-            color: #666;
-            margin-top: 5px;
-        }
-        .logo {
-            max-width: 150px;
-            height: auto;
-        }
-        .logo-fallback {
-            font-size: 1rem;
-            color: #666;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-        }
-        th, td {
-            padding: 15px;
-            text-align: left;
-            border-bottom: 1px solid #e0e0e0;
-        }
-        th {
-            background-color: #1a3c6d;
-            color: white;
-            font-weight: 700;
-            text-transform: uppercase;
-            font-size: 0.9rem;
-        }
-        tr {
-            transition: background-color 0.2s ease;
-        }
-        tr:hover {
-            background-color: #f8f9fa;
-        }
-        .status-red {
-            background-color: #ff4d4d;
-            color: white;
-            text-align: center;
-            border-radius: 6px;
-            padding: 6px 12px;
-            display: inline-block;
-            width: 100px;
-            font-size: 0.9rem;
-        }
-        .status-green {
-            background-color: #28a745;
-            color: white;
-            text-align: center;
-            border-radius: 6px;
-            padding: 6px 12px;
-            display: inline-block;
-            width: 100px;
-            font-size: 0.9rem;
-        }
-        .status-yellow {
-            background-color: #ffeb3b;
-            color: #333;
-            text-align: center;
-            border-radius: 6px;
-            padding: 6px 12px;
-            display: inline-block;
-            width: 100px;
-            font-size: 0.9rem;
-        }
-        .status-grey {
-            background-color: #6c757d;
-            color: white;
-            text-align: center;
-            border-radius: 6px;
-            padding: 6px 12px;
-            display: inline-block;
-            width: 100px;
-            font-size: 0.9rem;
-        }
-        #loading {
-            text-align: center;
-            font-size: 1.1rem;
-            color: #555;
-            margin: 20px 0;
-        }
-        #error {
-            text-align: center;
-            color: #ff4d4d;
-            font-weight: 500;
-            margin: 20px 0;
-        }
-        footer {
-            text-align: center;
-            margin-top: 30px;
-            color: #666;
-            font-size: 0.9rem;
-        }
-        @media (max-width: 768px) {
-            .container {
-                padding: 15px;
-            }
-            h1 {
-                font-size: 1.8rem;
-            }
-            .datetime {
-                font-size: 0.85rem;
-            }
-            .logo {
-                max-width: 100px;
-            }
-            th, td {
-                padding: 10px;
-                font-size: 0.85rem;
-            }
-            .status-red, .status-green, .status-yellow, .status-grey {
-                width: 80px;
-                padding: Anton 4px 8px;
-            }
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Appointment Waiting Times</title>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap"
+    rel="stylesheet"
+  />
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Roboto', sans-serif;
+      background-color: #f5f7fa;
+      color: #333;
+      line-height: 1.6;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 1000px;
+      margin: 0 auto;
+      background-color: #fff;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+      padding: 30px;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+
+    h1 {
+      font-size: 2.5rem;
+      color: #1a3c6d;
+    }
+
+    .datetime {
+      font-size: 1rem;
+      color: #666;
+      margin-top: 5px;
+    }
+
+    .logo {
+      max-width: 150px;
+      height: auto;
+    }
+
+    .logo-fallback {
+      font-size: 1rem;
+      color: #666;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+
+    caption {
+      text-align: left;
+      font-weight: 700;
+      color: #1a3c6d;
+      margin-bottom: 10px;
+    }
+
+    th,
+    td {
+      padding: 15px;
+      text-align: left;
+      border-bottom: 1px solid #e0e0e0;
+    }
+
+    th {
+      background-color: #1a3c6d;
+      color: white;
+      font-weight: 700;
+      text-transform: uppercase;
+      font-size: 0.9rem;
+    }
+
+    tr {
+      transition: background-color 0.2s ease;
+    }
+
+    tr:hover {
+      background-color: #f8f9fa;
+    }
+
+    .status-red {
+      background-color: #ff4d4d;
+      color: white;
+    }
+
+    .status-green {
+      background-color: #28a745;
+      color: white;
+    }
+
+    .status-yellow {
+      background-color: #ffeb3b;
+      color: #333;
+    }
+
+    .status-grey {
+      background-color: #6c757d;
+      color: white;
+    }
+
+    .status-badge {
+      text-align: center;
+      border-radius: 6px;
+      padding: 6px 12px;
+      display: inline-block;
+      width: 100px;
+      font-size: 0.9rem;
+      font-weight: 500;
+    }
+
+    #loading {
+      text-align: center;
+      font-size: 1.1rem;
+      color: #555;
+      margin: 20px 0;
+    }
+
+    #error {
+      text-align: center;
+      color: #ff4d4d;
+      font-weight: 500;
+      margin: 20px 0;
+    }
+
+    footer {
+      text-align: center;
+      margin-top: 30px;
+      color: #666;
+      font-size: 0.9rem;
+    }
+
+    @media (max-width: 768px) {
+      .container {
+        padding: 15px;
+      }
+
+      h1 {
+        font-size: 1.8rem;
+      }
+
+      .datetime {
+        font-size: 0.85rem;
+      }
+
+      .logo {
+        max-width: 100px;
+      }
+
+      th,
+      td {
+        padding: 10px;
+        font-size: 0.85rem;
+      }
+
+      .status-badge {
+        width: 80px;
+        padding: 4px 8px;
+      }
+    }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <header>
-            <div>
-                <h1>Appointment Waiting Times</h1>
-                <p id="datetime" class="datetime"></p>
-            </div>
-            <img src="logo.png" alt="Clinic Logo" class="logo" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
-            <span class="logo-fallback" style="display: none;">Clinic Logo</span>
-        </header>
-        <div id="loading">Loading data...</div>
-        <div id="error" style="display: none;"></div>
-        <table id="waiting-times-table" aria-label="Appointment Waiting Times">
-            <thead>
-                <tr>
-                    <th scope="col">Doctor</th>
-                    <th scope="col">Status</th>
-                    <th scope="col">Wait (minutes)</th>
-                </tr>
-            </thead>
-            <tbody id="table-body"></tbody>
-        </table>
-        <footer>
-            <p>Updated in real-time from clinic data &copy; 2025</p>
-        </footer>
-    </div>
+  <div class="container">
+    <header>
+      <div>
+        <h1>Appointment Waiting Times</h1>
+        <p id="datetime" class="datetime"></p>
+        <p id="last-updated" class="datetime"></p>
+      </div>
+      <div>
+        <img
+          src="logo.png"
+          alt="Clinic Logo"
+          class="logo"
+          onerror="this.style.display='none'; this.nextElementSibling.style.display='block';"
+        />
+        <span class="logo-fallback" style="display: none;">Clinic Logo</span>
+      </div>
+    </header>
 
-    <script>
-        const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vR6isKQeI8cgW7iaTV4KfnUugomy_4cHq-RcpqTDj1haz0uJFqIYi08khnhm5JuudGXxD4hh117g0GR/pub?output=csv';
+    <div id="loading">Loading data...</div>
+    <div id="error" style="display: none;"></div>
 
-        // Function to update date and time
-        function updateDateTime() {
-            const now = new Date();
-            const options = {
-                weekday: 'long',
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric',
-                hour: 'numeric',
-                minute: 'numeric',
-                hour12: true
-            };
-            const formattedDateTime = now.toLocaleString('en-GB', options);
-            document.getElementById('datetime').textContent = formattedDateTime;
+    <table id="waiting-times-table" aria-label="Appointment Waiting Times" aria-live="polite">
+      <caption>Current GP waiting times and availability status</caption>
+      <thead>
+        <tr>
+          <th scope="col">Doctor</th>
+          <th scope="col">Status</th>
+          <th scope="col">Wait (minutes)</th>
+        </tr>
+      </thead>
+      <tbody id="table-body"></tbody>
+    </table>
+
+    <footer>
+      <p>Updated automatically from clinic data &copy; 2025</p>
+    </footer>
+  </div>
+
+  <script>
+    const csvUrl =
+      'https://docs.google.com/spreadsheets/d/e/2PACX-1vR6isKQeI8cgW7iaTV4KfnUugomy_4cHq-RcpqTDj1haz0uJFqIYi08khnhm5JuudGXxD4hh117g0GR/pub?output=csv';
+
+    const cacheKey = 'waitingTimesData';
+    const cacheTimeKey = 'waitingTimesCacheTime';
+    const cacheDuration = 5 * 60 * 1000; // 5 minutes
+
+    function updateDateTime() {
+      const now = new Date();
+      const options = {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: 'numeric',
+        minute: 'numeric',
+        hour12: true,
+      };
+      document.getElementById('datetime').textContent = now.toLocaleString('en-GB', options);
+    }
+
+    function setLastUpdated() {
+      const now = new Date();
+      document.getElementById('last-updated').textContent = 'Last updated: ' + now.toLocaleTimeString();
+    }
+
+    function normalizeStatus(status) {
+      const s = status.toLowerCase();
+      if (/away/.test(s)) return { class: 'grey', label: 'Away' };
+      if (/on.?duty|available|consulting/.test(s)) return { class: 'green', label: 'On Duty' };
+      if (/busy|delayed|wait/.test(s)) return { class: 'yellow', label: 'Busy' };
+      return { class: 'red', label: 'Unavailable' };
+    }
+
+    function saveToCache(rows) {
+      localStorage.setItem(cacheKey, JSON.stringify(rows));
+      localStorage.setItem(cacheTimeKey, Date.now());
+    }
+
+    function loadFromCache() {
+      const cachedData = localStorage.getItem(cacheKey);
+      const cachedTime = localStorage.getItem(cacheTimeKey);
+      if (cachedData && cachedTime && Date.now() - cachedTime < cacheDuration) {
+        return JSON.parse(cachedData);
+      }
+      return null;
+    }
+
+    async function fetchCsvData() {
+      const response = await fetch(csvUrl);
+      if (!response.ok) throw new Error('Failed to fetch data from Google Sheet');
+      const csvText = await response.text();
+      const parsed = Papa.parse(csvText.trim(), { skipEmptyLines: true });
+      return parsed.data;
+    }
+
+    async function fetchData() {
+      const loading = document.getElementById('loading');
+      const errorDiv = document.getElementById('error');
+      const tableBody = document.getElementById('table-body');
+      loading.style.display = 'block';
+      errorDiv.style.display = 'none';
+      tableBody.innerHTML = '';
+
+      try {
+        let rows = loadFromCache();
+        if (!rows) {
+          rows = await fetchCsvData();
+          saveToCache(rows);
         }
 
-        // Update date and time immediately and every second
-        updateDateTime();
-        setInterval(updateDateTime, 1000);
-
-        async function fetchData() {
-            document.getElementById('loading').style.display = 'block';
-            document.getElementById('error').style.display = 'none';
-            try {
-                // Check cache
-                const cacheKey = 'waitingTimesData';
-                const cacheTimeKey = 'waitingTimesCacheTime';
-                const cacheDuration = 5 * 60 * 1000; // 5 minutes
-                const cachedData = localStorage.getItem(cacheKey);
-                const cachedTime = localStorage.getItem(cacheTimeKey);
-                let rows;
-
-                if (cachedData && cachedTime && (Date.now() - cachedTime) < cacheDuration) {
-                    rows = JSON.parse(cachedData);
-                } else {
-                    const response = await fetch(csvUrl);
-                    if (!response.ok) throw new Error('Failed to fetch data from Google Sheet');
-                    const csvText = await response.text();
-
-                    // Parse CSV with error handling
-                    rows = [];
-                    try {
-                        rows = csvText.split('\n').map(row => {
-                            const cols = [];
-                            let current = '';
-                            let inQuotes = false;
-                            for (let i = 0; i < row.length; i++) {
-                                if (row[i] === '"') {
-                                    inQuotes = !inQuotes;
-                                } else if (row[i] === ',' && !inQuotes) {
-                                    cols.push(current.trim());
-                                    current = '';
-                                } else {
-                                    current += row[i];
-                                }
-                            }
-                            cols.push(current.trim());
-                            return cols.filter(col => col !== ''); // Remove empty columns
-                        }).filter(row => row.length >= 3); // Ensure at least 3 columns
-                    } catch (parseError) {
-                        throw new Error('Failed to parse CSV: ' + parseError.message);
-                    }
-
-                    // Cache the data
-                    localStorage.setItem(cacheKey, JSON.stringify(rows));
-                    localStorage.setItem(cacheTimeKey, Date.now());
-                }
-
-                // Populate the table with all rows, skipping the header
-                const tableBody = document.getElementById('table-body');
-                tableBody.innerHTML = ''; // Clear existing rows
-                for (let i = 1; i < rows.length; i++) {
-                    const [doctor, status, wait] = rows[i];
-                    if (doctor && status && wait) { // Check non-empty doctor, status, and wait
-                        let normalizedStatus = status.toLowerCase().replace('away', 'grey').replace('on duty', 'green');
-                        if (['red', 'green', 'yellow', 'grey'].includes(normalizedStatus)) {
-                            const displayStatus = normalizedStatus === 'grey' ? 'Away' : (normalizedStatus === 'green' ? 'On Duty' : status);
-                            const row = document.createElement('tr');
-                            row.innerHTML = `
-                                <td>${doctor}</td>
-                                <td><span class="status-${normalizedStatus}">${displayStatus}</span></td>
-                                <td>${wait}</td>
-                            `;
-                            tableBody.appendChild(row);
-                        }
-                    }
-                }
-
-                document.getElementById('loading').style.display = 'none';
-            } catch (error) {
-                document.getElementById('loading').style.display = 'none';
-                const errorDiv = document.getElementById('error');
-                errorDiv.textContent = 'Error loading data: ' + error.message;
-                errorDiv.style.display = 'block';
-            }
+        for (let i = 1; i < rows.length; i++) {
+          const [doctor, status, wait] = rows[i];
+          if (doctor && status && wait) {
+            const { class: colorClass, label } = normalizeStatus(status);
+            const row = document.createElement('tr');
+            row.innerHTML = `
+              <td>${doctor}</td>
+              <td><span class="status-badge status-${colorClass}">${label}</span></td>
+              <td>${wait}</td>
+            `;
+            tableBody.appendChild(row);
+          }
         }
 
-        // Fetch data when the page loads and every 5 minutes
-        window.onload = fetchData;
-        setInterval(fetchData, 5 * 60 * 1000); // Refresh every 5 minutes
-    </script>
+        loading.style.display = 'none';
+        setLastUpdated();
+      } catch (error) {
+        loading.style.display = 'none';
+        errorDiv.textContent = 'Error loading data: ' + error.message;
+        errorDiv.style.display = 'block';
+      }
+    }
+
+    // Initialize
+    updateDateTime();
+    setInterval(updateDateTime, 60000); // update once per minute
+    window.onload = fetchData;
+    setInterval(fetchData, 5 * 60 * 1000); // refresh every 5 min
+  </script>
 </body>
 </html>
