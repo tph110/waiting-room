@@ -48,21 +48,6 @@
     tr { transition: background-color 0.18s ease; }
     tr:hover { background-color: #fbfcfe; }
 
-    /* Status badges */
-    .status-badge {
-      display:inline-block;
-      border-radius:6px;
-      padding:6px 12px;
-      width:110px;
-      text-align:center;
-      font-weight:600;
-      font-size:0.9rem;
-    }
-    .status-red { background-color:#ff4d4d; color:#fff; }
-    .status-yellow { background-color:#ffeb3b; color:#333; }
-    .status-grey { background-color:#6c757d; color:#fff; }
-    .status-blue { background-color:#007bff; color:#fff; }
-
     /* Wait-time badges */
     .wait-badge {
       display:inline-block;
@@ -109,7 +94,7 @@
       .container { padding:16px; }
       h1 { font-size:1.6rem; }
       th, td { padding:10px; font-size:0.88rem; }
-      .status-badge, .wait-badge { width:auto; padding:4px 8px; font-size:0.85rem; }
+      .wait-badge { width:auto; padding:4px 8px; font-size:0.85rem; }
       /* slower ticker scroll on mobile */
       #ticker-text { animation: ticker-scroll 40s linear infinite; }
     }
@@ -136,7 +121,6 @@
       <thead>
         <tr>
           <th scope="col">Doctor</th>
-          <th scope="col">Status</th>
           <th scope="col">Wait (minutes)</th>
         </tr>
       </thead>
@@ -171,16 +155,6 @@
     function saveToCache(rows){try{localStorage.setItem(cacheKey,JSON.stringify(rows)); localStorage.setItem(cacheTimeKey,Date.now());}catch(e){}}
     function loadFromCache(){try{const c=localStorage.getItem(cacheKey); const t=localStorage.getItem(cacheTimeKey); if(c&&t&&(Date.now()-Number(t))<cacheDuration) return JSON.parse(c);}catch(e){} return null;}
 
-    function normalizeStatus(statusRaw){
-      if(!statusRaw) return { className:'status-grey', label:'Unknown'};
-      const s=String(statusRaw).trim().toLowerCase();
-      if(/unavail|not available|closed|off sick/.test(s)) return {className:'status-red', label:'Unavailable'};
-      if(/on.?duty|available|consulting|in clinic|onsite/.test(s)) return {className:'status-blue', label:'Consulting'};
-      if(/busy|delayed|running late|wait|waiting/.test(s)) return {className:'status-yellow', label:'Busy'};
-      if(/away|off|break|off duty/.test(s)) return {className:'status-grey', label:'Away'};
-      return {className:'status-grey', label:statusRaw};
-    }
-
     function getWaitClassAndLabel(waitRaw){
       if(!waitRaw) return {cls:'wait-grey', label:''};
       const s=String(waitRaw).trim().toLowerCase();
@@ -211,14 +185,11 @@
         for(let i=1;i<rows.length;i++){
           const row=rows[i]||[];
           const doctor=(row[0]||'').trim();
-          const statusRaw=(row[1]||'').trim();
-          const waitRaw=(row[2]||'').trim();
-          if(!doctor&&!statusRaw&&!waitRaw) continue;
-          const status=normalizeStatus(statusRaw);
+          const waitRaw=(row[2]||'').trim(); // Status column skipped
+          if(!doctor&&!waitRaw) continue;
           const wait=getWaitClassAndLabel(waitRaw);
           const tr=document.createElement('tr');
           tr.innerHTML=`<td>${escapeHtml(doctor)}</td>
-                        <td><span class="status-badge ${status.className}">${escapeHtml(status.label)}</span></td>
                         <td><span class="wait-badge ${wait.cls}">${escapeHtml(wait.label)}</span></td>`;
           tbody.appendChild(tr);
         }
