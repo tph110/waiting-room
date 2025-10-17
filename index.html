@@ -1,21 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Appointment Waiting Times</title>
-  <link
-    href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap"
-    rel="stylesheet"
-  />
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet" />
   <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
   <style>
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-
+    * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
       font-family: 'Roboto', sans-serif;
       background-color: #f5f7fa;
@@ -23,16 +15,14 @@
       line-height: 1.6;
       padding: 20px;
     }
-
     .container {
       max-width: 1000px;
       margin: 0 auto;
       background-color: #fff;
       border-radius: 12px;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
       padding: 30px;
     }
-
     header {
       display: flex;
       justify-content: space-between;
@@ -40,48 +30,12 @@
       margin-bottom: 20px;
       flex-wrap: wrap;
     }
-
-    h1 {
-      font-size: 2.5rem;
-      color: #1a3c6d;
-    }
-
-    .datetime {
-      font-size: 1rem;
-      color: #666;
-      margin-top: 5px;
-    }
-
-    .logo {
-      max-width: 150px;
-      height: auto;
-    }
-
-    .logo-fallback {
-      font-size: 1rem;
-      color: #666;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 20px;
-    }
-
-    caption {
-      text-align: left;
-      font-weight: 700;
-      color: #1a3c6d;
-      margin-bottom: 10px;
-    }
-
-    th,
-    td {
-      padding: 15px;
-      text-align: left;
-      border-bottom: 1px solid #e0e0e0;
-    }
-
+    h1 { font-size: 2.5rem; color: #1a3c6d; }
+    .datetime { font-size: 1rem; color: #666; margin-top: 5px; }
+    .logo { max-width: 150px; height: auto; }
+    .logo-fallback { font-size: 1rem; color: #666; }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    th, td { padding: 15px; text-align: left; border-bottom: 1px solid #e0e0e0; }
     th {
       background-color: #1a3c6d;
       color: white;
@@ -89,35 +43,12 @@
       text-transform: uppercase;
       font-size: 0.9rem;
     }
-
-    tr {
-      transition: background-color 0.2s ease;
-    }
-
-    tr:hover {
-      background-color: #f8f9fa;
-    }
-
-    .status-red {
-      background-color: #ff4d4d;
-      color: white;
-    }
-
-    .status-green {
-      background-color: #28a745;
-      color: white;
-    }
-
-    .status-yellow {
-      background-color: #ffeb3b;
-      color: #333;
-    }
-
-    .status-grey {
-      background-color: #6c757d;
-      color: white;
-    }
-
+    tr { transition: background-color 0.2s ease; }
+    tr:hover { background-color: #f8f9fa; }
+    .status-red { background-color: #ff4d4d; color: white; }
+    .status-green { background-color: #28a745; color: white; }
+    .status-yellow { background-color: #ffeb3b; color: #333; }
+    .status-grey { background-color: #6c757d; color: white; }
     .status-badge {
       text-align: center;
       border-radius: 6px;
@@ -127,55 +58,17 @@
       font-size: 0.9rem;
       font-weight: 500;
     }
-
-    #loading {
-      text-align: center;
-      font-size: 1.1rem;
-      color: #555;
-      margin: 20px 0;
-    }
-
-    #error {
-      text-align: center;
-      color: #ff4d4d;
-      font-weight: 500;
-      margin: 20px 0;
-    }
-
-    footer {
-      text-align: center;
-      margin-top: 30px;
-      color: #666;
-      font-size: 0.9rem;
-    }
+    #loading { text-align: center; font-size: 1.1rem; color: #555; margin: 20px 0; }
+    #error { text-align: center; color: #ff4d4d; font-weight: 500; margin: 20px 0; }
+    footer { text-align: center; margin-top: 30px; color: #666; font-size: 0.9rem; }
 
     @media (max-width: 768px) {
-      .container {
-        padding: 15px;
-      }
-
-      h1 {
-        font-size: 1.8rem;
-      }
-
-      .datetime {
-        font-size: 0.85rem;
-      }
-
-      .logo {
-        max-width: 100px;
-      }
-
-      th,
-      td {
-        padding: 10px;
-        font-size: 0.85rem;
-      }
-
-      .status-badge {
-        width: 80px;
-        padding: 4px 8px;
-      }
+      .container { padding: 15px; }
+      h1 { font-size: 1.8rem; }
+      .datetime { font-size: 0.85rem; }
+      .logo { max-width: 100px; }
+      th, td { padding: 10px; font-size: 0.85rem; }
+      .status-badge { width: 80px; padding: 4px 8px; }
     }
   </style>
 </head>
@@ -185,24 +78,18 @@
       <div>
         <h1>Appointment Waiting Times</h1>
         <p id="datetime" class="datetime"></p>
-        <p id="last-updated" class="datetime"></p>
       </div>
       <div>
-        <img
-          src="logo.png"
-          alt="Clinic Logo"
-          class="logo"
-          onerror="this.style.display='none'; this.nextElementSibling.style.display='block';"
-        />
+        <img src="logo.png" alt="Clinic Logo" class="logo"
+             onerror="this.style.display='none'; this.nextElementSibling.style.display='block';" />
         <span class="logo-fallback" style="display: none;">Clinic Logo</span>
       </div>
     </header>
 
     <div id="loading">Loading data...</div>
-    <div id="error" style="display: none;"></div>
+    <div id="error" style="display:none;"></div>
 
     <table id="waiting-times-table" aria-label="Appointment Waiting Times" aria-live="polite">
-      <caption>Current GP waiting times and availability status</caption>
       <thead>
         <tr>
           <th scope="col">Doctor</th>
@@ -219,38 +106,55 @@
   </div>
 
   <script>
-    const csvUrl =
-      'https://docs.google.com/spreadsheets/d/e/2PACX-1vR6isKQeI8cgW7iaTV4KfnUugomy_4cHq-RcpqTDj1haz0uJFqIYi08khnhm5JuudGXxD4hh117g0GR/pub?output=csv';
-
+    const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vR6isKQeI8cgW7iaTV4KfnUugomy_4cHq-RcpqTDj1haz0uJFqIYi08khnhm5JuudGXxD4hh117g0GR/pub?output=csv';
     const cacheKey = 'waitingTimesData';
     const cacheTimeKey = 'waitingTimesCacheTime';
     const cacheDuration = 5 * 60 * 1000; // 5 minutes
 
+    // Update clock once per minute (minutes precision)
     function updateDateTime() {
       const now = new Date();
       const options = {
-        weekday: 'long',
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-        hour: 'numeric',
-        minute: 'numeric',
-        hour12: true,
+        weekday:'long', year:'numeric', month:'long', day:'numeric',
+        hour:'numeric', minute:'numeric', hour12:true
       };
       document.getElementById('datetime').textContent = now.toLocaleString('en-GB', options);
     }
+    updateDateTime();
+    setInterval(updateDateTime, 60000);
 
-    function setLastUpdated() {
-      const now = new Date();
-      document.getElementById('last-updated').textContent = 'Last updated: ' + now.toLocaleTimeString();
-    }
+    // More robust status normalisation:
+    // - If the sheet contains canonical words ('red','green','yellow','grey'), use them
+    // - Otherwise map common phrases; if unknown, show original text and use 'grey' visually
+    function normalizeStatus(statusRaw) {
+      if (!statusRaw && statusRaw !== 0) {
+        return { className: 'grey', label: 'Unknown' };
+      }
+      const original = String(statusRaw).trim();
+      const s = original.toLowerCase();
 
-    function normalizeStatus(status) {
-      const s = status.toLowerCase();
-      if (/away/.test(s)) return { class: 'grey', label: 'Away' };
-      if (/on.?duty|available|consulting/.test(s)) return { class: 'green', label: 'On Duty' };
-      if (/busy|delayed|wait/.test(s)) return { class: 'yellow', label: 'Busy' };
-      return { class: 'red', label: 'Unavailable' };
+      // Direct canonical checks
+      if (s === 'red' || s === 'unavailable' || /unavail|not available/.test(s)) {
+        return { className: 'red', label: 'Unavailable' };
+      }
+      if (s === 'green' || s === 'on duty' || /on.?duty|available|consulting|in clinic|onsite/.test(s)) {
+        return { className: 'green', label: 'On Duty' };
+      }
+      if (s === 'yellow' || /busy|delayed|running late|wait/.test(s)) {
+        return { className: 'yellow', label: 'Busy' };
+      }
+      if (s === 'grey' || /away|off|not here|off duty|break/.test(s)) {
+        return { className: 'grey', label: 'Away' };
+      }
+
+      // Some spreadsheets may contain extra context like "On Duty - Room 2" or "Unavailable (system)"
+      if (/away/.test(s)) return { className: 'grey', label: original };
+      if (/on.?duty|available|consulting|in clinic|onsite/.test(s)) return { className: 'green', label: original };
+      if (/busy|delayed|running late|wait/.test(s)) return { className: 'yellow', label: original };
+      if (/unavail|unavailable|off sick|closed|not working/.test(s)) return { className: 'red', label: original };
+
+      // If we couldn't map confidently, show original text with a neutral grey badge
+      return { className: 'grey', label: original };
     }
 
     function saveToCache(rows) {
@@ -259,20 +163,19 @@
     }
 
     function loadFromCache() {
-      const cachedData = localStorage.getItem(cacheKey);
-      const cachedTime = localStorage.getItem(cacheTimeKey);
-      if (cachedData && cachedTime && Date.now() - cachedTime < cacheDuration) {
-        return JSON.parse(cachedData);
+      const cached = localStorage.getItem(cacheKey);
+      const time = localStorage.getItem(cacheTimeKey);
+      if (cached && time && Date.now() - time < cacheDuration) {
+        try { return JSON.parse(cached); } catch(e) { return null; }
       }
       return null;
     }
 
-    async function fetchCsvData() {
-      const response = await fetch(csvUrl);
-      if (!response.ok) throw new Error('Failed to fetch data from Google Sheet');
-      const csvText = await response.text();
-      const parsed = Papa.parse(csvText.trim(), { skipEmptyLines: true });
-      return parsed.data;
+    async function fetchCsvRaw() {
+      const resp = await fetch(csvUrl);
+      if (!resp.ok) throw new Error('Failed to fetch CSV from Google Sheets');
+      const text = await resp.text();
+      return Papa.parse(text.trim(), { skipEmptyLines: true }).data;
     }
 
     async function fetchData() {
@@ -286,38 +189,45 @@
       try {
         let rows = loadFromCache();
         if (!rows) {
-          rows = await fetchCsvData();
+          rows = await fetchCsvRaw();
           saveToCache(rows);
         }
 
+        // If the CSV has only headers or unexpected structure, guard against it
+        if (!rows || rows.length < 2) {
+          throw new Error('No data in sheet or unexpected CSV format');
+        }
+
+        // Render rows (skip header row)
         for (let i = 1; i < rows.length; i++) {
-          const [doctor, status, wait] = rows[i];
-          if (doctor && status && wait) {
-            const { class: colorClass, label } = normalizeStatus(status);
-            const row = document.createElement('tr');
-            row.innerHTML = `
-              <td>${doctor}</td>
-              <td><span class="status-badge status-${colorClass}">${label}</span></td>
-              <td>${wait}</td>
-            `;
-            tableBody.appendChild(row);
-          }
+          const row = rows[i] || [];
+          const doctor = (row[0] || '').trim();
+          const statusRaw = row[1] !== undefined ? String(row[1]).trim() : '';
+          const wait = (row[2] !== undefined ? String(row[2]).trim() : '');
+
+          if (!doctor && !statusRaw && !wait) continue; // skip empty
+          // Populate columns; use normalizeStatus to decide badge
+          const normalized = normalizeStatus(statusRaw);
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td>${doctor || ''}</td>
+            <td><span class="status-badge status-${normalized.className}">${normalized.label}</span></td>
+            <td>${wait || ''}</td>
+          `;
+          tableBody.appendChild(tr);
         }
 
         loading.style.display = 'none';
-        setLastUpdated();
-      } catch (error) {
+      } catch (err) {
         loading.style.display = 'none';
-        errorDiv.textContent = 'Error loading data: ' + error.message;
+        errorDiv.textContent = 'Error loading data: ' + err.message;
         errorDiv.style.display = 'block';
       }
     }
 
-    // Initialize
-    updateDateTime();
-    setInterval(updateDateTime, 60000); // update once per minute
+    // Initial load and periodic refresh
     window.onload = fetchData;
-    setInterval(fetchData, 5 * 60 * 1000); // refresh every 5 min
+    setInterval(fetchData, 5 * 60 * 1000); // refresh every 5 minutes
   </script>
 </body>
 </html>
