@@ -45,6 +45,8 @@
     }
     tr { transition: background-color 0.2s ease; }
     tr:hover { background-color: #f8f9fa; }
+
+    /* Doctor status badges */
     .status-red { background-color: #ff4d4d; color: white; }
     .status-green { background-color: #28a745; color: white; }
     .status-yellow { background-color: #ffeb3b; color: #333; }
@@ -58,6 +60,14 @@
       font-size: 0.9rem;
       font-weight: 500;
     }
+
+    /* NEW: Wait-time color classes */
+    .wait-green { background-color: #28a745; color: white; font-weight: 600; border-radius: 6px; padding: 6px 12px; display: inline-block; }
+    .wait-lightgreen { background-color: #8bc34a; color: white; font-weight: 600; border-radius: 6px; padding: 6px 12px; display: inline-block; }
+    .wait-yellow { background-color: #ffeb3b; color: #333; font-weight: 600; border-radius: 6px; padding: 6px 12px; display: inline-block; }
+    .wait-red { background-color: #ff4d4d; color: white; font-weight: 600; border-radius: 6px; padding: 6px 12px; display: inline-block; }
+    .wait-grey { background-color: #e0e0e0; color: #333; border-radius: 6px; padding: 6px 12px; display: inline-block; }
+
     #loading { text-align: center; font-size: 1.1rem; color: #555; margin: 20px 0; }
     #error { text-align: center; color: #ff4d4d; font-weight: 500; margin: 20px 0; }
     footer { text-align: center; margin-top: 30px; color: #666; font-size: 0.9rem; }
@@ -82,7 +92,7 @@
       <div>
         <img src="logo.png" alt="Clinic Logo" class="logo"
              onerror="this.style.display='none'; this.nextElementSibling.style.display='block';" />
-        <span class="logo-fallback" style="display: none;">Clinic Logo</span>
+        <span class="logo-fallback" style="display:none;">Clinic Logo</span>
       </div>
     </header>
 
@@ -111,7 +121,6 @@
     const cacheTimeKey = 'waitingTimesCacheTime';
     const cacheDuration = 5 * 60 * 1000; // 5 minutes
 
-    // Update clock once per minute (minutes precision)
     function updateDateTime() {
       const now = new Date();
       const options = {
@@ -123,58 +132,44 @@
     updateDateTime();
     setInterval(updateDateTime, 60000);
 
-    // More robust status normalisation:
-    // - If the sheet contains canonical words ('red','green','yellow','grey'), use them
-    // - Otherwise map common phrases; if unknown, show original text and use 'grey' visually
     function normalizeStatus(statusRaw) {
-      if (!statusRaw && statusRaw !== 0) {
-        return { className: 'grey', label: 'Unknown' };
-      }
-      const original = String(statusRaw).trim();
-      const s = original.toLowerCase();
+      if (!statusRaw) return { className: 'grey', label: 'Unknown' };
+      const s = statusRaw.toLowerCase();
+      if (/unavail|not available/.test(s)) return { className: 'red', label: 'Unavailable' };
+      if (/on.?duty|available|consulting|in clinic|onsite/.test(s)) return { className: 'green', label: 'On Duty' };
+      if (/busy|delayed|running late|wait/.test(s)) return { className: 'yellow', label: 'Busy' };
+      if (/away|off|break/.test(s)) return { className: 'grey', label: 'Away' };
+      return { className: 'grey', label: statusRaw };
+    }
 
-      // Direct canonical checks
-      if (s === 'red' || s === 'unavailable' || /unavail|not available/.test(s)) {
-        return { className: 'red', label: 'Unavailable' };
-      }
-      if (s === 'green' || s === 'on duty' || /on.?duty|available|consulting|in clinic|onsite/.test(s)) {
-        return { className: 'green', label: 'On Duty' };
-      }
-      if (s === 'yellow' || /busy|delayed|running late|wait/.test(s)) {
-        return { className: 'yellow', label: 'Busy' };
-      }
-      if (s === 'grey' || /away|off|not here|off duty|break/.test(s)) {
-        return { className: 'grey', label: 'Away' };
-      }
-
-      // Some spreadsheets may contain extra context like "On Duty - Room 2" or "Unavailable (system)"
-      if (/away/.test(s)) return { className: 'grey', label: original };
-      if (/on.?duty|available|consulting|in clinic|onsite/.test(s)) return { className: 'green', label: original };
-      if (/busy|delayed|running late|wait/.test(s)) return { className: 'yellow', label: original };
-      if (/unavail|unavailable|off sick|closed|not working/.test(s)) return { className: 'red', label: original };
-
-      // If we couldn't map confidently, show original text with a neutral grey badge
-      return { className: 'grey', label: original };
+    // NEW: Determine wait cell color class
+    function getWaitClass(waitValue) {
+      if (!waitValue) return 'wait-grey';
+      const val = waitValue.toString().trim().toLowerCase();
+      if (val === 'on time') return 'wait-green';
+      if (val === '15 minute delay' || val === '15 min delay' || val === '15 delay') return 'wait-lightgreen';
+      if (val === '30 minute delay' || val === '30 min delay' || val === '30 delay') return 'wait-yellow';
+      if (val === 'severely delayed' || /severe/.test(val)) return 'wait-red';
+      return 'wait-grey';
     }
 
     function saveToCache(rows) {
       localStorage.setItem(cacheKey, JSON.stringify(rows));
       localStorage.setItem(cacheTimeKey, Date.now());
     }
-
     function loadFromCache() {
-      const cached = localStorage.getItem(cacheKey);
-      const time = localStorage.getItem(cacheTimeKey);
-      if (cached && time && Date.now() - time < cacheDuration) {
-        try { return JSON.parse(cached); } catch(e) { return null; }
+      const c = localStorage.getItem(cacheKey);
+      const t = localStorage.getItem(cacheTimeKey);
+      if (c && t && Date.now() - t < cacheDuration) {
+        try { return JSON.parse(c); } catch(e) { return null; }
       }
       return null;
     }
 
     async function fetchCsvRaw() {
-      const resp = await fetch(csvUrl);
-      if (!resp.ok) throw new Error('Failed to fetch CSV from Google Sheets');
-      const text = await resp.text();
+      const r = await fetch(csvUrl);
+      if (!r.ok) throw new Error('Failed to fetch CSV');
+      const text = await r.text();
       return Papa.parse(text.trim(), { skipEmptyLines: true }).data;
     }
 
@@ -188,35 +183,26 @@
 
       try {
         let rows = loadFromCache();
-        if (!rows) {
-          rows = await fetchCsvRaw();
-          saveToCache(rows);
-        }
+        if (!rows) { rows = await fetchCsvRaw(); saveToCache(rows); }
 
-        // If the CSV has only headers or unexpected structure, guard against it
-        if (!rows || rows.length < 2) {
-          throw new Error('No data in sheet or unexpected CSV format');
-        }
-
-        // Render rows (skip header row)
         for (let i = 1; i < rows.length; i++) {
           const row = rows[i] || [];
           const doctor = (row[0] || '').trim();
-          const statusRaw = row[1] !== undefined ? String(row[1]).trim() : '';
-          const wait = (row[2] !== undefined ? String(row[2]).trim() : '');
+          const statusRaw = (row[1] || '').trim();
+          const wait = (row[2] || '').trim();
+          if (!doctor && !statusRaw && !wait) continue;
 
-          if (!doctor && !statusRaw && !wait) continue; // skip empty
-          // Populate columns; use normalizeStatus to decide badge
           const normalized = normalizeStatus(statusRaw);
+          const waitClass = getWaitClass(wait);
+
           const tr = document.createElement('tr');
           tr.innerHTML = `
-            <td>${doctor || ''}</td>
+            <td>${doctor}</td>
             <td><span class="status-badge status-${normalized.className}">${normalized.label}</span></td>
-            <td>${wait || ''}</td>
+            <td><span class="${waitClass}">${wait}</span></td>
           `;
           tableBody.appendChild(tr);
         }
-
         loading.style.display = 'none';
       } catch (err) {
         loading.style.display = 'none';
@@ -225,9 +211,8 @@
       }
     }
 
-    // Initial load and periodic refresh
     window.onload = fetchData;
-    setInterval(fetchData, 5 * 60 * 1000); // refresh every 5 minutes
+    setInterval(fetchData, 5 * 60 * 1000);
   </script>
 </body>
 </html>
