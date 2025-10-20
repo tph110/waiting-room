@@ -25,8 +25,17 @@
     box-shadow: 0 4px 20px rgba(0,0,0,0.08);
     padding: 30px;
   }
-  header { display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; }
+  header { display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; flex-wrap: wrap; }
   h1 { font-size:2.2rem; color:#1a3c6d; }
+
+  /* new datetime styling */
+  #datetime {
+    font-size: 1rem;
+    color: #555;
+    margin-top: 4px;
+    font-weight: 500;
+  }
+
   .logo { max-width:150px; height:auto; }
 
   table { width:100%; border-collapse:collapse; margin-top:20px; }
@@ -84,45 +93,14 @@
 </head>
 <body>
   <div class="container">
-<header>
-  <div>
-    <h1>Appointment Waiting Times</h1>
-    <div id="datetime" aria-live="polite"></div>
-   #datetime {
-  font-size: 1rem;
-  color: #555;
-  margin-top: 4px;
-  font-weight: 500;
-}
-// Live date and time updater
-function updateDateTime() {
-  const now = new Date();
-  const options = {
-    weekday: 'long',
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-    hour: 'numeric',
-    minute: '2-digit',
-    second: '2-digit',
-  };
-  const formatted = now.toLocaleString(undefined, options);
-  document.getElementById('datetime').textContent = formatted;
-}
+    <header>
+      <div>
+        <h1>Appointment Waiting Times</h1>
+        <div id="datetime" aria-live="polite"></div>
+      </div>
+      <img src="logo.png" alt="Clinic Logo" class="logo" onerror="this.style.display='none'">
+    </header>
 
-window.addEventListener('load', () => {
-  fetchData();
-  fetchTickerText();
-  setInterval(fetchData, 5 * 60 * 1000);
-  setInterval(fetchTickerText, 5 * 60 * 1000);
-  updateDateTime();
-  setInterval(updateDateTime, 1000);
-});
-
-  
-  </div>
-  <img src="logo.png" alt="Clinic Logo" class="logo" onerror="this.style.display='none'">
-</header>
     <div id="loading">Loading data...</div>
     <div id="error" role="alert"></div>
 
@@ -143,14 +121,6 @@ window.addEventListener('load', () => {
   <div id="ticker-container" aria-live="polite">
     <div id="ticker-text">Loading ticker...</div>
   </div>
-window.addEventListener('load', () => {
-  fetchData();
-  fetchTickerText();
-  setInterval(fetchData, 5 * 60 * 1000);
-  setInterval(fetchTickerText, 5 * 60 * 1000);
-  updateDateTime();
-  setInterval(updateDateTime, 1000);
-});
 
 <script>
   const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vR6isKQeI8cgW7iaTV4KfnUugomy_4cHq-RcpqTDj1haz0uJFqIYi08khnhm5JuudGXxD4hh117g0GR/pub?output=csv';
@@ -230,11 +200,8 @@ window.addEventListener('load', () => {
         throw new Error('CSV appears empty or has no data rows');
       }
 
-      // Render rows: support both 2-column and 3+-column layout robustly
       for (let i = 1; i < rows.length; i++) {
         const row = rows[i] || [];
-        // If row has >=3 columns, doctor is col0 and wait is col2
-        // If row has exactly 2 columns, doctor is col0 and wait is col1
         const doctor = (row[0] !== undefined ? String(row[0]).trim() : '');
         let waitRaw = '';
         if (row.length >= 3) {
@@ -242,7 +209,6 @@ window.addEventListener('load', () => {
         } else if (row.length === 2) {
           waitRaw = row[1] !== undefined ? String(row[1]).trim() : '';
         } else {
-          // not enough columns - skip
           continue;
         }
 
@@ -284,12 +250,30 @@ window.addEventListener('load', () => {
     }
   }
 
+  // Live date and time updater
+  function updateDateTime() {
+    const now = new Date();
+    const options = {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+      second: '2-digit',
+    };
+    const formatted = now.toLocaleString(undefined, options);
+    document.getElementById('datetime').textContent = formatted;
+  }
+
   // Kick off on load and auto-refresh
   window.addEventListener('load', () => {
     fetchData();
     fetchTickerText();
     setInterval(fetchData, 5 * 60 * 1000);
     setInterval(fetchTickerText, 5 * 60 * 1000);
+    updateDateTime();
+    setInterval(updateDateTime, 1000);
   });
 </script>
 </body>
