@@ -84,11 +84,19 @@
 </head>
 <body>
   <div class="container">
-    <header>
-      <h1>Appointment Waiting Times</h1>
-      <img src="logo.png" alt="Clinic Logo" class="logo" onerror="this.style.display='none'">
-    </header>
-
+<header>
+  <div>
+    <h1>Appointment Waiting Times</h1>
+    <div id="datetime" aria-live="polite"></div>
+   #datetime {
+  font-size: 1rem;
+  color: #555;
+  margin-top: 4px;
+  font-weight: 500;
+}
+  </div>
+  <img src="logo.png" alt="Clinic Logo" class="logo" onerror="this.style.display='none'">
+</header>
     <div id="loading">Loading data...</div>
     <div id="error" role="alert"></div>
 
@@ -109,6 +117,29 @@
   <div id="ticker-container" aria-live="polite">
     <div id="ticker-text">Loading ticker...</div>
   </div>
+// Live date and time updater
+function updateDateTime() {
+  const now = new Date();
+  const options = {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+    second: '2-digit',
+  };
+  const formatted = now.toLocaleString(undefined, options);
+  document.getElementById('datetime').textContent = formatted;
+}
+window.addEventListener('load', () => {
+  fetchData();
+  fetchTickerText();
+  setInterval(fetchData, 5 * 60 * 1000);
+  setInterval(fetchTickerText, 5 * 60 * 1000);
+  updateDateTime();
+  setInterval(updateDateTime, 1000);
+});
 
 <script>
   const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vR6isKQeI8cgW7iaTV4KfnUugomy_4cHq-RcpqTDj1haz0uJFqIYi08khnhm5JuudGXxD4hh117g0GR/pub?output=csv';
