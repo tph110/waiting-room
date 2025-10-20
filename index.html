@@ -28,7 +28,7 @@
   header { display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; flex-wrap: wrap; }
   h1 { font-size:2.2rem; color:#1a3c6d; }
 
-  /* new datetime styling */
+  /* live date/time styling */
   #datetime {
     font-size: 1rem;
     color: #555;
@@ -172,12 +172,12 @@
     return null;
   }
 
-  // Use PapaParse to reliably parse CSV text into rows array
   function parseCsv(text) {
     const p = Papa.parse(text.trim(), { skipEmptyLines: true });
     return p.data || [];
   }
 
+  // Updated fetchData: skips any row with an empty doctor cell
   async function fetchData() {
     const loading = document.getElementById('loading');
     const errorDiv = document.getElementById('error');
@@ -212,7 +212,8 @@
           continue;
         }
 
-        if (!doctor && !waitRaw) continue;
+        // Skip rows with no doctor name
+        if (!doctor) continue;
 
         const wait = getWaitClassAndLabel(waitRaw);
         const tr = document.createElement('tr');
@@ -232,7 +233,7 @@
     }
   }
 
-  // Ticker: fetch Sheet 3 Cell A1 using PapaParse (robust)
+  // Ticker text
   async function fetchTickerText() {
     try {
       const resp = await fetch(sheet3CsvUrl, { cache: 'no-store' });
