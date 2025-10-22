@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Appointment Waiting Times</title>
 <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
-<!-- PapaParse for robust CSV parsing -->
 <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -15,7 +14,6 @@
     color: #333;
     line-height: 1.6;
     padding: 20px;
-    padding-bottom: 80px; /* leave space for ticker */
   }
   .container {
     max-width: 1000px;
@@ -25,10 +23,15 @@
     box-shadow: 0 4px 20px rgba(0,0,0,0.08);
     padding: 30px;
   }
-  header { display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; flex-wrap: wrap; }
-  h1 { font-size:2.2rem; color:#1a3c6d; }
+  header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+  }
+  h1 { font-size: 2.2rem; color: #1a3c6d; }
 
-  /* live date/time styling */
   #datetime {
     font-size: 1rem;
     color: #555;
@@ -36,17 +39,26 @@
     font-weight: 500;
   }
 
-  .logo { max-width:150px; height:auto; }
+  .logo { max-width: 150px; height: auto; }
 
-  table { width:100%; border-collapse:collapse; margin-top:20px; }
-  th, td { padding:15px; text-align:left; border-bottom:1px solid #e9ecef; vertical-align:middle; font-size:1rem; }
+  table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+  th, td {
+    padding: 15px;
+    text-align: left;
+    border-bottom: 1px solid #e9ecef;
+    vertical-align: middle;
+    font-size: 1rem;
+  }
   th {
-    background-color:#1a3c6d; color:#fff; font-weight:700; text-transform:uppercase; font-size:0.85rem;
+    background-color: #1a3c6d;
+    color: #fff;
+    font-weight: 700;
+    text-transform: uppercase;
+    font-size: 0.85rem;
   }
   tr { transition: background-color 0.18s ease; }
   tr:hover { background-color: #fbfcfe; }
 
-  /* Wait-time cell background styling (full-cell) */
   .wait-cell {
     color: #fff;
     font-weight: 600;
@@ -60,35 +72,13 @@
   }
   .wait-green { background-color: #28a745; }
   .wait-lightgreen { background-color: #8bc34a; }
-  .wait-yellow { background-color: #ffeb3b; color: #333; }
+  .wait-yellow { background-color: #fbc02d; color: #333; } /* Improved contrast */
   .wait-red { background-color: #ff4d4d; }
   .wait-grey { background-color: #e9ecef; color: #333; }
 
-  #loading, #error { text-align:center; margin:20px 0; }
-  #loading { font-size:1.05rem; color:#555; }
-  #error { color:#ff4d4d; font-weight:600; display:none; }
-
-  footer { text-align:center; margin-top:26px; color:#666; font-size:0.9rem; }
-
-  /* Ticker */
-  #ticker-container {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    background-color: #1a3c6d;
-    color: white;
-    overflow: hidden;
-    white-space: nowrap;
-    box-shadow: 0 -2px 8px rgba(0,0,0,0.15);
-    font-weight: 600;
-    padding: 8px 0;
-    font-size: 1rem;
-    z-index: 999;
-  }
-  #ticker-text { display:inline-block; padding-left:100%; animation: ticker-scroll 25s linear infinite; }
-  @keyframes ticker-scroll { 0% { transform: translateX(0%); } 100% { transform: translateX(-100%); } }
-  @media (max-width:768px) { #ticker-text { animation-duration:40s; } }
+  #loading, #error { text-align: center; margin: 20px 0; }
+  #loading { font-size: 1.05rem; color: #555; }
+  #error { color: #ff4d4d; font-weight: 600; display: none; }
 </style>
 </head>
 <body>
@@ -108,23 +98,15 @@
       <thead>
         <tr>
           <th scope="col">Doctor</th>
-          <th scope="col">Wait (minutes)</th>
+          <th scope="col">Status</th>
         </tr>
       </thead>
       <tbody id="table-body"></tbody>
     </table>
-
-    <footer><p>Updated in real-time from clinic data &copy; 2025</p></footer>
-  </div>
-
-  <!-- Ticker -->
-  <div id="ticker-container" aria-live="polite">
-    <div id="ticker-text">Loading ticker...</div>
   </div>
 
 <script>
   const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vR6isKQeI8cgW7iaTV4KfnUugomy_4cHq-RcpqTDj1haz0uJFqIYi08khnhm5JuudGXxD4hh117g0GR/pub?output=csv';
-  const sheet3CsvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vR6isKQeI8cgW7iaTV4KfnUugomy_4cHq-RcpqTDj1haz0uJFqIYi08khnhm5JuudGXxD4hh117g0GR/pub?gid=901601788&single=true&output=csv';
   const cacheKey = 'waitingTimesData';
   const cacheTimeKey = 'waitingTimesCacheTime';
   const cacheDuration = 5 * 60 * 1000; // 5 minutes
@@ -146,7 +128,6 @@
     if (s === '15 minute delay' || s === '15 min delay' || s === '15 min' || s === '15') return { cls: 'wait-lightgreen', label: raw };
     if (s === '30 minute delay' || s === '30 min delay' || s === '30 min' || s === '30') return { cls: 'wait-yellow', label: raw };
     if (s === 'severely delayed' || /severe/.test(s)) return { cls: 'wait-red', label: raw };
-    // fallback: try to detect numbers (e.g. "10", "5", "20-30")
     const numMatch = raw.match(/\d+/);
     if (numMatch) {
       const n = Number(numMatch[0]);
@@ -166,7 +147,8 @@
   }
   function loadFromCache() {
     try {
-      const c = localStorage.getItem(cacheKey); const t = localStorage.getItem(cacheTimeKey);
+      const c = localStorage.getItem(cacheKey);
+      const t = localStorage.getItem(cacheTimeKey);
       if (c && t && (Date.now() - Number(t)) < cacheDuration) return JSON.parse(c);
     } catch(e) {}
     return null;
@@ -177,7 +159,6 @@
     return p.data || [];
   }
 
-  // Updated fetchData: skips any row with an empty doctor cell
   async function fetchData() {
     const loading = document.getElementById('loading');
     const errorDiv = document.getElementById('error');
@@ -212,7 +193,6 @@
           continue;
         }
 
-        // Skip rows with no doctor name
         if (!doctor) continue;
 
         const wait = getWaitClassAndLabel(waitRaw);
@@ -233,25 +213,6 @@
     }
   }
 
-  // Ticker text
-  async function fetchTickerText() {
-    try {
-      const resp = await fetch(sheet3CsvUrl, { cache: 'no-store' });
-      if (!resp.ok) throw new Error('Failed to fetch ticker CSV (status ' + resp.status + ')');
-      const text = await resp.text();
-      const rows = parseCsv(text);
-      let tickerText = 'No ticker message';
-      if (Array.isArray(rows) && rows.length > 0 && rows[0].length > 0) {
-        tickerText = String(rows[0][0] || '').trim() || 'No ticker message';
-      }
-      document.getElementById('ticker-text').textContent = tickerText;
-    } catch (err) {
-      console.error('Ticker error:', err);
-      document.getElementById('ticker-text').textContent = 'Error loading ticker';
-    }
-  }
-
-  // Live date and time updater
   function updateDateTime() {
     const now = new Date();
     const options = {
@@ -267,12 +228,9 @@
     document.getElementById('datetime').textContent = formatted;
   }
 
-  // Kick off on load and auto-refresh
   window.addEventListener('load', () => {
     fetchData();
-    fetchTickerText();
     setInterval(fetchData, 5 * 60 * 1000);
-    setInterval(fetchTickerText, 5 * 60 * 1000);
     updateDateTime();
     setInterval(updateDateTime, 1000);
   });
