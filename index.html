@@ -32,10 +32,18 @@
   }
   h1 { font-size: 2.2rem; color: #1a3c6d; }
 
+  /* Subheading under title */
+  #clinic-name {
+    font-size: 1.1rem;
+    color: #666;
+    margin-top: 4px;
+    margin-bottom: 6px;
+    font-weight: 500;
+  }
+
   #datetime {
     font-size: 1rem;
     color: #555;
-    margin-top: 4px;
     font-weight: 500;
   }
 
@@ -86,6 +94,7 @@
     <header>
       <div>
         <h1>Appointment Waiting Times</h1>
+        <div id="clinic-name">Banbury Road Medical Centre</div>
         <div id="datetime" aria-live="polite"></div>
       </div>
       <img src="logo.png" alt="Clinic Logo" class="logo" onerror="this.style.display='none'">
