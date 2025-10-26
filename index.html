@@ -32,7 +32,6 @@
   }
   h1 { font-size: 2.2rem; color: #1a3c6d; }
 
-  /* Subheading under title */
   #clinic-name {
     font-size: 1.1rem;
     color: #666;
@@ -80,13 +79,40 @@
   }
   .wait-green { background-color: #28a745; }
   .wait-lightgreen { background-color: #8bc34a; }
-  .wait-yellow { background-color: #fbc02d; color: #333; } /* Improved contrast */
+  .wait-yellow { background-color: #fbc02d; color: #333; }
   .wait-red { background-color: #ff4d4d; }
   .wait-grey { background-color: #e9ecef; color: #333; }
 
   #loading, #error { text-align: center; margin: 20px 0; }
   #loading { font-size: 1.05rem; color: #555; }
   #error { color: #ff4d4d; font-weight: 600; display: none; }
+
+  /* 🔧 Ticker Styles */
+  #ticker-container {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    background-color: #1a3c6d;
+    color: white;
+    font-size: 1rem;
+    font-weight: 500;
+    overflow: hidden;
+    white-space: nowrap;
+    border-top: 3px solid #0f2750;
+    z-index: 9999;
+  }
+
+  #ticker-text {
+    display: inline-block;
+    padding-left: 100%;
+    animation: ticker-scroll 25s linear infinite;
+  }
+
+  @keyframes ticker-scroll {
+    from { transform: translateX(0); }
+    to { transform: translateX(-100%); }
+  }
 </style>
 </head>
 <body>
@@ -114,8 +140,15 @@
     </table>
   </div>
 
+  <!-- 🔧 Ticker -->
+  <div id="ticker-container" aria-live="polite">
+    <div id="ticker-text">Loading updates...</div>
+  </div>
+
 <script>
   const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vR6isKQeI8cgW7iaTV4KfnUugomy_4cHq-RcpqTDj1haz0uJFqIYi08khnhm5JuudGXxD4hh117g0GR/pub?output=csv';
+  const tickerUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vR6isKQeI8cgW7iaTV4KfnUugomy_4cHq-RcpqTDj1haz0uJFqIYi08khnhm5JuudGXxD4hh117g0GR/pub?gid=901601788&single=true&output=csv';
+
   const cacheKey = 'waitingTimesData';
   const cacheTimeKey = 'waitingTimesCacheTime';
   const cacheDuration = 5 * 60 * 1000; // 5 minutes
@@ -152,7 +185,7 @@
 
   function saveToCache(rows) {
     try { localStorage.setItem(cacheKey, JSON.stringify(rows)); localStorage.setItem(cacheTimeKey, Date.now()); }
-    catch(e) { /* ignore */ }
+    catch(e) {}
   }
   function loadFromCache() {
     try {
@@ -222,6 +255,21 @@
     }
   }
 
+  // 🔧 Fetch ticker text from Sheet 3
+  async function fetchTicker() {
+    try {
+      const resp = await fetch(tickerUrl, { cache: 'no-store' });
+      if (!resp.ok) throw new Error('Ticker fetch failed');
+      const text = await resp.text();
+      const rows = parseCsv(text);
+      const tickerText = (rows && rows[0] && rows[0][0]) ? String(rows[0][0]).trim() : 'No updates available.';
+      document.getElementById('ticker-text').textContent = tickerText || 'No updates available.';
+    } catch (err) {
+      console.error('Ticker error:', err);
+      document.getElementById('ticker-text').textContent = 'Error loading updates.';
+    }
+  }
+
   function updateDateTime() {
     const now = new Date();
     const options = {
@@ -239,7 +287,9 @@
 
   window.addEventListener('load', () => {
     fetchData();
+    fetchTicker();
     setInterval(fetchData, 5 * 60 * 1000);
+    setInterval(fetchTicker, 5 * 60 * 1000);
     updateDateTime();
     setInterval(updateDateTime, 1000);
   });
